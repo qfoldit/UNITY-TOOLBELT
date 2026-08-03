@@ -1,0 +1,19 @@
+{
+    "name": "QFoldIT.Toolbelt.Tests.Editor",
+    "rootNamespace": "QFoldIT.Toolbelt.Tests",
+    "references": [
+        "QFoldIT.Toolbelt.Editor",
+        "UnityEngine.TestRunner",
+        "UnityEditor.TestRunner"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "optionalUnityReferences": [
+        "TestAssemblies"
+    ],
+    "autoReferenced": false,
+    "precompiledReferences": [
+        "nunit.framework.dll"
+    ]
+}
