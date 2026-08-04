@@ -2,7 +2,11 @@
     "name": "QFoldIT.Toolbelt.Editor",
     "rootNamespace": "QFoldIT.Toolbelt.Editor",
     "references": [
-        "Unity.AI.MCP.Editor"
+        "Unity.AI.MCP.Editor",
+        "Unity.RenderPipelines.Universal.Runtime",
+        "Unity.RenderPipelines.Core.Runtime",
+        "UnityEngine.UI",
+        "UnityEditor.UI"
     ],
     "includePlatforms": [
         "Editor"

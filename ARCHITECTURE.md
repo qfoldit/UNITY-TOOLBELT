@@ -34,7 +34,7 @@ McpToolRegistry
 qfoldit-unity-toolbelt/
 ├── package.json                  Unity Package Manager manifest
 ├── Editor/
-│   ├── QFoldIT.Toolbelt.Editor.asmdef   references Unity.AI.MCP.Editor
+│   ├── QFoldIT.Toolbelt.Editor.asmdef   references Unity.AI.MCP.Editor, URP runtime, UGUI
 │   ├── Core/
 │   │   └── ToolbeltRegistry.cs   category metadata + manifest export menu item
 │   └── Tools/
@@ -46,7 +46,23 @@ qfoldit-unity-toolbelt/
 │       ├── WorldStateExportTools.cs      scene graph → JSON
 │       ├── CodeGenTools.cs       MonoBehaviour wired to real objects
 │       ├── AssetTools.cs         list/instantiate/find project assets
-│       └── ConsoleBuildTools.cs  menu items, player build, console log
+│       ├── ConsoleBuildTools.cs  menu items, player build, console log
+│       ├── LightingTools.cs      lights, skybox, ambient, fog, lightmap bake, presets
+│       ├── PhysicsTools.cs       rigidbody, colliders, physics materials, joints, raycasts
+│       ├── AnimationTools.cs     AnimatorController states/transitions/parameters
+│       ├── UITools.cs            uGUI canvas/button/text/panel/slider/image
+│       ├── AudioTools.cs         AudioSource, one-shots, mixer groups, listener, reverb
+│       ├── CameraTools.cs        camera rigs, dependency-free follow, clipping, screenshots
+│       ├── ParticleTools.cs      7 particle presets + fine control
+│       ├── NavigationTools.cs    NavMesh bake, agents, obstacles, destinations
+│       ├── PrefabWorkflowTools.cs   prefab create/apply/revert/unpack
+│       ├── ComponentTools.cs     reflection-based generic component add/remove/get/set/list
+│       ├── TagsLayersTools.cs    tag/layer create + assign
+│       ├── SceneManagementTools.cs   multi-scene create/load/unload/activate/save
+│       ├── MeasurementTools.cs   distance, per-object bounds, scene bounds
+│       ├── UtilityTools.cs       batch rename, screenshot, undo/redo
+│       ├── TerrainTools.cs       terrain create/sculpt/flatten/paint/trees
+│       └── PostProcessingTools.cs   URP Volume: bloom, vignette, color, DoF
 ├── docs/TOOL_REFERENCE.md
 ├── registry.json                 plugin manifest (mirrors UEFN Toolbelt's format)
 └── Tests/Editor/                 edit-mode smoke tests
@@ -97,6 +113,7 @@ To add a new tool: create or extend a file under `Editor/Tools/`, add a
 generated manifest stay accurate. Unity discovers new tools automatically
 via `TypeCache` — no manual registration call is needed.
 
-Planned next categories (not yet implemented): terrain tools, animation
-state-machine scaffolding, UI Toolkit layout generation, Cinemachine camera
-rigs, addressables workflow, ProBuilder procedural geometry.
+Planned next categories (not yet implemented): Cinemachine-native camera
+rigs (optional dependency, alongside the built-in follow behaviour),
+Addressables workflow, ProBuilder procedural geometry, Timeline/cutscene
+tools, Input System action asset generation, localization table scaffolding.

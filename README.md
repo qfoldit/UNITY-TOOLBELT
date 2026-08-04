@@ -1,6 +1,6 @@
 # qFoldIT Toolbelt — Unity
 
-**25 composite editor-automation tools for Unity, exposed to AI agents through Unity's own official MCP bridge.**
+**102 composite editor-automation tools for Unity, exposed to AI agents through Unity's own official MCP bridge.**
 
 > Built by **qFoldIT** — foundation release, 2026
 
@@ -68,27 +68,48 @@ See [ARCHITECTURE.md](ARCHITECTURE.md) for the full design and
    `Saved/QFoldIT_Toolbelt/tool_manifest.json` for agents that prefer to
    load a static manifest instead of calling MCP's live `list tools`.
 
-## Tool categories (25 tools total)
+## Tool categories (102 tools total)
 
-| Category     | Tools | What it covers |
-|--------------|:-----:|-----------------|
-| Scene        | 7 | spawn, transform, clone, delete, parent, list, find |
-| Materials    | 5 | 12 presets, bulk swap, team-color split, list presets |
-| Procedural   | 2 | 8-pattern placement, symmetrical arena generator |
-| Stamps       | 3 | save/place/list reusable object groups |
-| Project      | 1 | folder scaffold + boilerplate GameManager |
-| WorldState   | 1 | full scene graph → JSON for AI context |
-| CodeGen      | 1 | MonoBehaviour wired to real scene objects |
-| Assets       | 3 | list / instantiate / find project assets |
-| BuildConsole | 3 | menu items, player builds, console log count |
+| Category | Tools | What it covers |
+|----------|:-----:|-----------------|
+| Animation | 5 | Create AnimatorControllers, states, transitions, parameters, and attach them to objects. |
+| Assets | 3 | List, instantiate, and find project assets by type and name. |
+| Audio | 5 | AudioSource setup, one-shot playback, mixer groups, listener management, reverb zones. |
+| Camera | 5 | Create cameras, dependency-free follow behaviour, clipping planes, background, screenshots. |
+| CodeGen | 1 | Generates a MonoBehaviour with real, bindable public fields for named scene objects. |
+| Components | 5 | Reflection-based generic add/remove/get/set/list for any component type. |
+| BuildConsole | 3 | Execute menu items, trigger player builds, read console log entry count. |
+| Lighting | 6 | Create lights, set skybox/ambient/fog, bake lightmaps, apply full lighting presets. |
+| Materials | 4 | 12 material presets, bulk swap by name match, team-color split, preset listing. |
+| Measurement | 3 | Distance between objects, per-object bounds, and full-scene bounds. |
+| Navigation | 4 | Bake NavMesh, add agents/obstacles, set runtime pathing destinations. |
+| Particles | 4 | 7 particle system presets (fire, smoke, explosion, sparkle, rain, snow, magic) plus fine control. |
+| Physics | 6 | Rigidbody/collider setup, physics materials, joints, raycasts, global gravity. |
+| PostProcessing | 5 | URP Volume/VolumeProfile setup: bloom, vignette, color adjustments, depth of field. |
+| Assets | 4 | Create prefabs from scene objects, apply/revert overrides, unpack instances. |
+| Procedural | 2 | 8 geometric placement patterns (grid, circle, arc, spiral, line, wave, helix, radial) plus a symmetrical arena generator. |
+| Project | 1 | Standard folder scaffold plus a boilerplate GameManager singleton MonoBehaviour. |
+| SceneManagement | 5 | Create, load, unload, activate, and save scenes in a multi-scene setup. |
+| Scene | 7 | Spawn, transform, clone, delete, parent, list, and find GameObjects in the active scene. |
+| Stamps | 3 | Save a selection as a reusable stamp; place it anywhere with rotation; list saved stamps. |
+| TagsLayers | 4 | Create and assign tags and layers, including recursive layer assignment. |
+| Terrain | 5 | Create terrain, sculpt hills/craters, flatten, paint textures, scatter trees. |
+| UI | 7 | Build uGUI Canvas hierarchies: buttons, text, panels, sliders, images, anchor presets. |
+| Utility | 4 | Batch rename, Game view screenshots, Editor undo/redo. |
+| WorldState | 1 | Exports the full scene graph (names, components, transforms, parents) to JSON for AI context. |
 
 ## Roadmap to parity
 
-This is a **foundation release** — 25 real tools, not 355. The categories
-above are structured to grow the same way UEFN Toolbelt's did: community
-plugin files under `Editor/Tools/`, each adding a handful of `[McpTool]`
-methods, tracked in `registry.json`. See `ROADMAP.md`-equivalent notes in
-[ARCHITECTURE.md](ARCHITECTURE.md#extending-the-toolbelt).
+This release brings the toolbelt to **102 real tools** across 24 categories
+— still short of UEFN Toolbelt's 355, but a large step up from the initial
+25-tool foundation release. Structured to keep growing the same way: new
+files under `Editor/Tools/`, each adding `[McpTool]` methods, tracked in
+`registry.json`. See [ARCHITECTURE.md](ARCHITECTURE.md#extending-the-toolbelt).
+
+Categories still on the list: Cinemachine-native camera rigs (as an
+optional dependency alongside the built-in follow behaviour), Addressables
+workflow, ProBuilder procedural geometry, Timeline/cutscene tools,
+Input System action asset generation, localization table scaffolding.
 
 ## License
 

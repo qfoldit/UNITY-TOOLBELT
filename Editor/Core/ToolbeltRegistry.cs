@@ -43,21 +43,35 @@ namespace QFoldIT.Toolbelt.Editor.Core
 
     public static class ToolbeltRegistry
     {
-        public const string ToolbeltVersion = "0.1.0";
+        public const string ToolbeltVersion = "0.2.0";
         public const string Organization = "qFoldIT";
 
         public static readonly ToolbeltCategory[] Categories =
         {
-            new ToolbeltCategory("Scene",       "Spawn, transform, clone, parent, and query GameObjects in the open scene."),
-            new ToolbeltCategory("Materials",   "Material presets, bulk swap, team-color split, procedural material generation."),
-            new ToolbeltCategory("Procedural",  "Geometric placement patterns: grid, circle, arc, spiral, line, wave, helix, radial."),
-            new ToolbeltCategory("Arena",       "Symmetrical competitive layout generator with team-color auto split."),
-            new ToolbeltCategory("Stamps",      "Save a selection of objects as a reusable stamp; place it anywhere later."),
-            new ToolbeltCategory("Project",     "Scaffold folder structure and boilerplate scripts for a new project."),
-            new ToolbeltCategory("WorldState",  "Export the live scene graph to JSON so an AI agent has full context."),
-            new ToolbeltCategory("CodeGen",     "Generate wired MonoBehaviour boilerplate referencing real scene objects."),
-            new ToolbeltCategory("Assets",      "Query, import, and instantiate project assets and prefabs."),
-            new ToolbeltCategory("BuildConsole","Trigger builds, run editor commands, read the console log."),
+            new ToolbeltCategory("Scene",           "Spawn, transform, clone, parent, and query GameObjects in the open scene."),
+            new ToolbeltCategory("Materials",       "Material presets, bulk swap, team-color split, procedural material generation."),
+            new ToolbeltCategory("Procedural",      "Geometric placement patterns: grid, circle, arc, spiral, line, wave, helix, radial."),
+            new ToolbeltCategory("Stamps",          "Save a selection of objects as a reusable stamp; place it anywhere later."),
+            new ToolbeltCategory("Project",         "Scaffold folder structure and boilerplate scripts for a new project."),
+            new ToolbeltCategory("WorldState",      "Export the live scene graph to JSON so an AI agent has full context."),
+            new ToolbeltCategory("CodeGen",         "Generate wired MonoBehaviour boilerplate referencing real scene objects."),
+            new ToolbeltCategory("Assets",          "Query, import, instantiate, and prefab-workflow project assets."),
+            new ToolbeltCategory("BuildConsole",    "Trigger builds, run editor commands, read the console log."),
+            new ToolbeltCategory("Lighting",        "Lights, skybox, ambient, fog, lightmap baking, full lighting presets."),
+            new ToolbeltCategory("Physics",         "Rigidbodies, colliders, physics materials, joints, raycasts, gravity."),
+            new ToolbeltCategory("Animation",       "AnimatorController creation, states, transitions, parameters."),
+            new ToolbeltCategory("UI",              "uGUI canvas, buttons, text, panels, sliders, images, anchor presets."),
+            new ToolbeltCategory("Audio",           "AudioSource setup, one-shots, mixer groups, listener, reverb zones."),
+            new ToolbeltCategory("Camera",          "Camera rigs, dependency-free follow, clipping, background, screenshots."),
+            new ToolbeltCategory("Particles",       "7 particle system presets plus emission/color/burst fine control."),
+            new ToolbeltCategory("Navigation",      "NavMesh baking, agents, obstacles, runtime pathing destinations."),
+            new ToolbeltCategory("Components",      "Reflection-based generic component add/remove/get/set/list."),
+            new ToolbeltCategory("TagsLayers",      "Create and assign tags and layers, including recursive layer assignment."),
+            new ToolbeltCategory("SceneManagement", "Create, load, unload, activate, and save scenes in a multi-scene setup."),
+            new ToolbeltCategory("Measurement",     "Distance between objects, per-object bounds, full-scene bounds."),
+            new ToolbeltCategory("Utility",         "Batch rename, Game view screenshots, Editor undo/redo."),
+            new ToolbeltCategory("Terrain",         "Terrain creation, sculpting, flattening, texture painting, tree scatter."),
+            new ToolbeltCategory("PostProcessing",  "URP Volume setup: bloom, vignette, color adjustments, depth of field."),
         };
 
         /// <summary>

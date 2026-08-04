@@ -1,117 +1,436 @@
 {
   "schema_version": "1.0",
-  "updated": "2026-08-02",
+  "updated": "2026-08-03",
   "description": "qFoldIT Toolbelt for Unity — plugin registry. Format mirrors UEFN Toolbelt's registry.json.",
   "engine": "unity",
   "transport": "in-process (Unity MCP McpToolRegistry, no external bridge)",
   "plugins": [
     {
-      "id": "scene_tools",
-      "name": "Scene Tools",
-      "version": "0.1.0",
+      "id": "animation_tools",
+      "name": "Animation Tools",
+      "version": "0.2.0",
       "author": "qFoldIT",
       "type": "core",
-      "description": "Spawn, transform, clone, delete, parent, list, and find GameObjects in the active scene.",
-      "category": "Scene",
-      "file": "Editor/Tools/SceneTools.cs",
-      "tool_count": 7,
-      "tools": ["spawn_primitive", "transform_object", "clone_object", "delete_object", "parent_object", "scene_list_objects", "scene_find_by_name"]
-    },
-    {
-      "id": "material_tools",
-      "name": "Material Tools",
-      "version": "0.1.0",
-      "author": "qFoldIT",
-      "type": "core",
-      "description": "12 material presets, bulk swap by name match, team-color split, preset listing.",
-      "category": "Materials",
-      "file": "Editor/Tools/MaterialTools.cs",
-      "tool_count": 4,
-      "tools": ["material_apply_preset", "material_bulk_swap", "material_team_color_split", "material_list_presets"]
-    },
-    {
-      "id": "procedural_placement",
-      "name": "Procedural Placement & Arena",
-      "version": "0.1.0",
-      "author": "qFoldIT",
-      "type": "core",
-      "description": "8 geometric placement patterns (grid, circle, arc, spiral, line, wave, helix, radial) plus a symmetrical arena generator.",
-      "category": "Procedural",
-      "file": "Editor/Tools/ProceduralPlacementTools.cs",
-      "tool_count": 2,
-      "tools": ["procedural_place", "arena_generate"]
-    },
-    {
-      "id": "stamp_tools",
-      "name": "Stamp Tools",
-      "version": "0.1.0",
-      "author": "qFoldIT",
-      "type": "core",
-      "description": "Save a selection as a reusable stamp; place it anywhere with rotation; list saved stamps.",
-      "category": "Stamps",
-      "file": "Editor/Tools/StampTools.cs",
-      "tool_count": 3,
-      "tools": ["stamp_save", "stamp_place", "stamp_list"]
-    },
-    {
-      "id": "project_setup",
-      "name": "Project Setup",
-      "version": "0.1.0",
-      "author": "qFoldIT",
-      "type": "core",
-      "description": "Standard folder scaffold plus a boilerplate GameManager singleton MonoBehaviour.",
-      "category": "Project",
-      "file": "Editor/Tools/ProjectSetupTools.cs",
-      "tool_count": 1,
-      "tools": ["project_setup"]
-    },
-    {
-      "id": "world_state_export",
-      "name": "World State Export",
-      "version": "0.1.0",
-      "author": "qFoldIT",
-      "type": "core",
-      "description": "Exports the full scene graph (names, components, transforms, parents) to JSON for AI context.",
-      "category": "WorldState",
-      "file": "Editor/Tools/WorldStateExportTools.cs",
-      "tool_count": 1,
-      "tools": ["world_state_export"]
-    },
-    {
-      "id": "codegen_tools",
-      "name": "CodeGen Tools",
-      "version": "0.1.0",
-      "author": "qFoldIT",
-      "type": "core",
-      "description": "Generates a MonoBehaviour with real, bindable public fields for named scene objects.",
-      "category": "CodeGen",
-      "file": "Editor/Tools/CodeGenTools.cs",
-      "tool_count": 1,
-      "tools": ["codegen_monobehaviour"]
+      "description": "Create AnimatorControllers, states, transitions, parameters, and attach them to objects.",
+      "category": "Animation",
+      "file": "Editor/Tools/AnimationTools.cs",
+      "tool_count": 5,
+      "tools": [
+        "anim_create_controller",
+        "anim_add_state",
+        "anim_add_transition",
+        "anim_set_parameter",
+        "anim_attach_controller"
+      ]
     },
     {
       "id": "asset_tools",
       "name": "Asset Tools",
-      "version": "0.1.0",
+      "version": "0.2.0",
       "author": "qFoldIT",
       "type": "core",
       "description": "List, instantiate, and find project assets by type and name.",
       "category": "Assets",
       "file": "Editor/Tools/AssetTools.cs",
       "tool_count": 3,
-      "tools": ["asset_list", "asset_instantiate_prefab", "asset_find_by_type"]
+      "tools": [
+        "asset_list",
+        "asset_instantiate_prefab",
+        "asset_find_by_type"
+      ]
+    },
+    {
+      "id": "audio_tools",
+      "name": "Audio Tools",
+      "version": "0.2.0",
+      "author": "qFoldIT",
+      "type": "core",
+      "description": "AudioSource setup, one-shot playback, mixer groups, listener management, reverb zones.",
+      "category": "Audio",
+      "file": "Editor/Tools/AudioTools.cs",
+      "tool_count": 5,
+      "tools": [
+        "audio_add_source",
+        "audio_play_one_shot",
+        "audio_create_mixer_group",
+        "audio_set_listener",
+        "audio_set_reverb_zone"
+      ]
+    },
+    {
+      "id": "camera_tools",
+      "name": "Camera Tools",
+      "version": "0.2.0",
+      "author": "qFoldIT",
+      "type": "core",
+      "description": "Create cameras, dependency-free follow behaviour, clipping planes, background, screenshots.",
+      "category": "Camera",
+      "file": "Editor/Tools/CameraTools.cs",
+      "tool_count": 5,
+      "tools": [
+        "camera_create_rig",
+        "camera_set_follow_target",
+        "camera_set_clipping",
+        "camera_set_background",
+        "camera_screenshot"
+      ]
+    },
+    {
+      "id": "codegen_tools",
+      "name": "CodeGen Tools",
+      "version": "0.2.0",
+      "author": "qFoldIT",
+      "type": "core",
+      "description": "Generates a MonoBehaviour with real, bindable public fields for named scene objects.",
+      "category": "CodeGen",
+      "file": "Editor/Tools/CodeGenTools.cs",
+      "tool_count": 1,
+      "tools": [
+        "codegen_monobehaviour"
+      ]
+    },
+    {
+      "id": "component_tools",
+      "name": "Component Tools",
+      "version": "0.2.0",
+      "author": "qFoldIT",
+      "type": "core",
+      "description": "Reflection-based generic add/remove/get/set/list for any component type.",
+      "category": "Components",
+      "file": "Editor/Tools/ComponentTools.cs",
+      "tool_count": 5,
+      "tools": [
+        "component_add",
+        "component_remove",
+        "component_set_field",
+        "component_list",
+        "component_get_field"
+      ]
     },
     {
       "id": "console_build_tools",
       "name": "Console & Build Tools",
-      "version": "0.1.0",
+      "version": "0.2.0",
       "author": "qFoldIT",
       "type": "core",
       "description": "Execute menu items, trigger player builds, read console log entry count.",
       "category": "BuildConsole",
       "file": "Editor/Tools/ConsoleBuildTools.cs",
       "tool_count": 3,
-      "tools": ["console_execute_menu_item", "build_player", "console_get_log"]
+      "tools": [
+        "console_execute_menu_item",
+        "build_player",
+        "console_get_log"
+      ]
+    },
+    {
+      "id": "lighting_tools",
+      "name": "Lighting Tools",
+      "version": "0.2.0",
+      "author": "qFoldIT",
+      "type": "core",
+      "description": "Create lights, set skybox/ambient/fog, bake lightmaps, apply full lighting presets.",
+      "category": "Lighting",
+      "file": "Editor/Tools/LightingTools.cs",
+      "tool_count": 6,
+      "tools": [
+        "light_create",
+        "light_set_skybox",
+        "light_set_ambient",
+        "light_set_fog",
+        "light_bake_lightmaps",
+        "light_apply_preset"
+      ]
+    },
+    {
+      "id": "material_tools",
+      "name": "Material Tools",
+      "version": "0.2.0",
+      "author": "qFoldIT",
+      "type": "core",
+      "description": "12 material presets, bulk swap by name match, team-color split, preset listing.",
+      "category": "Materials",
+      "file": "Editor/Tools/MaterialTools.cs",
+      "tool_count": 4,
+      "tools": [
+        "material_apply_preset",
+        "material_bulk_swap",
+        "material_team_color_split",
+        "material_list_presets"
+      ]
+    },
+    {
+      "id": "measurement_tools",
+      "name": "Measurement Tools",
+      "version": "0.2.0",
+      "author": "qFoldIT",
+      "type": "core",
+      "description": "Distance between objects, per-object bounds, and full-scene bounds.",
+      "category": "Measurement",
+      "file": "Editor/Tools/MeasurementTools.cs",
+      "tool_count": 3,
+      "tools": [
+        "measure_distance",
+        "measure_bounds",
+        "measure_scene_bounds"
+      ]
+    },
+    {
+      "id": "navigation_tools",
+      "name": "Navigation Tools",
+      "version": "0.2.0",
+      "author": "qFoldIT",
+      "type": "core",
+      "description": "Bake NavMesh, add agents/obstacles, set runtime pathing destinations.",
+      "category": "Navigation",
+      "file": "Editor/Tools/NavigationTools.cs",
+      "tool_count": 4,
+      "tools": [
+        "nav_bake_navmesh",
+        "nav_add_agent",
+        "nav_add_obstacle",
+        "nav_set_destination"
+      ]
+    },
+    {
+      "id": "particle_tools",
+      "name": "Particle Tools",
+      "version": "0.2.0",
+      "author": "qFoldIT",
+      "type": "core",
+      "description": "7 particle system presets (fire, smoke, explosion, sparkle, rain, snow, magic) plus fine control.",
+      "category": "Particles",
+      "file": "Editor/Tools/ParticleTools.cs",
+      "tool_count": 4,
+      "tools": [
+        "particles_apply_preset",
+        "particles_set_emission_rate",
+        "particles_set_color_over_lifetime",
+        "particles_burst"
+      ]
+    },
+    {
+      "id": "physics_tools",
+      "name": "Physics Tools",
+      "version": "0.2.0",
+      "author": "qFoldIT",
+      "type": "core",
+      "description": "Rigidbody/collider setup, physics materials, joints, raycasts, global gravity.",
+      "category": "Physics",
+      "file": "Editor/Tools/PhysicsTools.cs",
+      "tool_count": 6,
+      "tools": [
+        "physics_add_rigidbody",
+        "physics_add_collider",
+        "physics_set_physics_material",
+        "physics_add_joint",
+        "physics_raycast_query",
+        "physics_set_gravity"
+      ]
+    },
+    {
+      "id": "postprocessing_tools",
+      "name": "Post-Processing Tools",
+      "version": "0.2.0",
+      "author": "qFoldIT",
+      "type": "core",
+      "description": "URP Volume/VolumeProfile setup: bloom, vignette, color adjustments, depth of field.",
+      "category": "PostProcessing",
+      "file": "Editor/Tools/PostProcessingTools.cs",
+      "tool_count": 5,
+      "tools": [
+        "postfx_create_global_volume",
+        "postfx_set_bloom",
+        "postfx_set_vignette",
+        "postfx_set_color_adjustments",
+        "postfx_set_depth_of_field"
+      ]
+    },
+    {
+      "id": "prefab_workflow_tools",
+      "name": "Prefab Workflow Tools",
+      "version": "0.2.0",
+      "author": "qFoldIT",
+      "type": "core",
+      "description": "Create prefabs from scene objects, apply/revert overrides, unpack instances.",
+      "category": "Assets",
+      "file": "Editor/Tools/PrefabWorkflowTools.cs",
+      "tool_count": 4,
+      "tools": [
+        "prefab_create_from_object",
+        "prefab_apply_overrides",
+        "prefab_revert_overrides",
+        "prefab_unpack"
+      ]
+    },
+    {
+      "id": "procedural_placement",
+      "name": "Procedural Placement & Arena",
+      "version": "0.2.0",
+      "author": "qFoldIT",
+      "type": "core",
+      "description": "8 geometric placement patterns (grid, circle, arc, spiral, line, wave, helix, radial) plus a symmetrical arena generator.",
+      "category": "Procedural",
+      "file": "Editor/Tools/ProceduralPlacementTools.cs",
+      "tool_count": 2,
+      "tools": [
+        "procedural_place",
+        "arena_generate"
+      ]
+    },
+    {
+      "id": "project_setup",
+      "name": "Project Setup",
+      "version": "0.2.0",
+      "author": "qFoldIT",
+      "type": "core",
+      "description": "Standard folder scaffold plus a boilerplate GameManager singleton MonoBehaviour.",
+      "category": "Project",
+      "file": "Editor/Tools/ProjectSetupTools.cs",
+      "tool_count": 1,
+      "tools": [
+        "project_setup"
+      ]
+    },
+    {
+      "id": "scene_management_tools",
+      "name": "Multi-Scene Management Tools",
+      "version": "0.2.0",
+      "author": "qFoldIT",
+      "type": "core",
+      "description": "Create, load, unload, activate, and save scenes in a multi-scene setup.",
+      "category": "SceneManagement",
+      "file": "Editor/Tools/SceneManagementTools.cs",
+      "tool_count": 5,
+      "tools": [
+        "scene_create_additive",
+        "scene_load_additive",
+        "scene_unload",
+        "scene_set_active",
+        "scene_save"
+      ]
+    },
+    {
+      "id": "scene_tools",
+      "name": "Scene Tools",
+      "version": "0.2.0",
+      "author": "qFoldIT",
+      "type": "core",
+      "description": "Spawn, transform, clone, delete, parent, list, and find GameObjects in the active scene.",
+      "category": "Scene",
+      "file": "Editor/Tools/SceneTools.cs",
+      "tool_count": 7,
+      "tools": [
+        "spawn_primitive",
+        "transform_object",
+        "clone_object",
+        "delete_object",
+        "parent_object",
+        "scene_list_objects",
+        "scene_find_by_name"
+      ]
+    },
+    {
+      "id": "stamp_tools",
+      "name": "Stamp Tools",
+      "version": "0.2.0",
+      "author": "qFoldIT",
+      "type": "core",
+      "description": "Save a selection as a reusable stamp; place it anywhere with rotation; list saved stamps.",
+      "category": "Stamps",
+      "file": "Editor/Tools/StampTools.cs",
+      "tool_count": 3,
+      "tools": [
+        "stamp_save",
+        "stamp_place",
+        "stamp_list"
+      ]
+    },
+    {
+      "id": "tags_layers_tools",
+      "name": "Tags & Layers Tools",
+      "version": "0.2.0",
+      "author": "qFoldIT",
+      "type": "core",
+      "description": "Create and assign tags and layers, including recursive layer assignment.",
+      "category": "TagsLayers",
+      "file": "Editor/Tools/TagsLayersTools.cs",
+      "tool_count": 4,
+      "tools": [
+        "tag_create",
+        "tag_assign",
+        "layer_create",
+        "layer_assign"
+      ]
+    },
+    {
+      "id": "terrain_tools",
+      "name": "Terrain Tools",
+      "version": "0.2.0",
+      "author": "qFoldIT",
+      "type": "core",
+      "description": "Create terrain, sculpt hills/craters, flatten, paint textures, scatter trees.",
+      "category": "Terrain",
+      "file": "Editor/Tools/TerrainTools.cs",
+      "tool_count": 5,
+      "tools": [
+        "terrain_create",
+        "terrain_sculpt_hill",
+        "terrain_flatten",
+        "terrain_paint_texture",
+        "terrain_add_trees"
+      ]
+    },
+    {
+      "id": "ui_tools",
+      "name": "UI Tools",
+      "version": "0.2.0",
+      "author": "qFoldIT",
+      "type": "core",
+      "description": "Build uGUI Canvas hierarchies: buttons, text, panels, sliders, images, anchor presets.",
+      "category": "UI",
+      "file": "Editor/Tools/UITools.cs",
+      "tool_count": 7,
+      "tools": [
+        "ui_create_canvas",
+        "ui_create_button",
+        "ui_create_text",
+        "ui_create_panel",
+        "ui_create_slider",
+        "ui_create_image",
+        "ui_set_anchor_preset"
+      ]
+    },
+    {
+      "id": "utility_tools",
+      "name": "Editor Utility Tools",
+      "version": "0.2.0",
+      "author": "qFoldIT",
+      "type": "core",
+      "description": "Batch rename, Game view screenshots, Editor undo/redo.",
+      "category": "Utility",
+      "file": "Editor/Tools/UtilityTools.cs",
+      "tool_count": 4,
+      "tools": [
+        "batch_rename",
+        "editor_screenshot",
+        "editor_undo",
+        "editor_redo"
+      ]
+    },
+    {
+      "id": "world_state_export",
+      "name": "World State Export",
+      "version": "0.2.0",
+      "author": "qFoldIT",
+      "type": "core",
+      "description": "Exports the full scene graph (names, components, transforms, parents) to JSON for AI context.",
+      "category": "WorldState",
+      "file": "Editor/Tools/WorldStateExportTools.cs",
+      "tool_count": 1,
+      "tools": [
+        "world_state_export"
+      ]
     }
   ]
 }
