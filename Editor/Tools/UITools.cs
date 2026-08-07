@@ -126,13 +126,15 @@ namespace QFoldIT.Toolbelt.Editor.Tools
             public float Y { get; set; } = 0f;
             public float Width { get; set; } = 400f;
             public float Height { get; set; } = 300f;
+            [McpDescription("Name for the panel GameObject", Default = "Panel")]
+            public string Name { get; set; } = "Panel";
         }
 
         [McpTool("ui_create_panel", "Creates a background panel Image under the given Canvas.")]
         public static object CreatePanel(CreatePanelParams p)
         {
             var parent = FindOrCreateCanvas(p.Canvas);
-            var go = new GameObject("Panel", typeof(RectTransform), typeof(Image));
+            var go = new GameObject(string.IsNullOrEmpty(p.Name) ? "Panel" : p.Name, typeof(RectTransform), typeof(Image));
             go.transform.SetParent(parent, false);
             var rt = go.GetComponent<RectTransform>();
             rt.anchoredPosition = new Vector2(p.X, p.Y);

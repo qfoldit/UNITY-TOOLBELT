@@ -319,7 +319,7 @@
       "description": "Spawn, transform, clone, delete, parent, list, and find GameObjects in the active scene.",
       "category": "Scene",
       "file": "Editor/Tools/SceneTools.cs",
-      "tool_count": 7,
+      "tool_count": 8,
       "tools": [
         "spawn_primitive",
         "transform_object",
@@ -327,6 +327,7 @@
         "delete_object",
         "parent_object",
         "scene_list_objects",
+        "spawn_group_node",
         "scene_find_by_name"
       ]
     },
@@ -379,6 +380,21 @@
         "terrain_flatten",
         "terrain_paint_texture",
         "terrain_add_trees"
+      ]
+    },
+    {
+      "id": "uag_bridge_tools",
+      "name": "UAG Bridge Tools",
+      "version": "0.2.0",
+      "author": "qFoldIT",
+      "type": "core",
+      "description": "Validates and realizes qFoldIT Universal Assembly Graphs by calling this toolbelt's own tools — the Universal World Interface adapter connecting Unity to the rest of the qFoldIT stack.",
+      "category": "UAGBridge",
+      "file": "Editor/Tools/UAGBridgeTools.cs",
+      "tool_count": 2,
+      "tools": [
+        "uag_validate",
+        "uag_apply"
       ]
     },
     {

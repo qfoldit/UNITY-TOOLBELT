@@ -6,7 +6,8 @@
         "Unity.RenderPipelines.Universal.Runtime",
         "Unity.RenderPipelines.Core.Runtime",
         "UnityEngine.UI",
-        "UnityEditor.UI"
+        "UnityEditor.UI",
+        "Newtonsoft.Json"
     ],
     "includePlatforms": [
         "Editor"

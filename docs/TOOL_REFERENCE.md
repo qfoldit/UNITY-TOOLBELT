@@ -1,6 +1,6 @@
 # Tool Reference — qFoldIT Toolbelt for Unity
 
-Auto-summarized from `registry.json` (2026-08-03). 102 tools across 25 categories.
+Auto-summarized from `registry.json` (2026-08-03). 105 tools across 26 categories.
 
 ## Animation — Animation Tools
 
@@ -211,6 +211,7 @@ Source: `Editor/Tools/SceneTools.cs`
 - `delete_object`
 - `parent_object`
 - `scene_list_objects`
+- `spawn_group_node`
 - `scene_find_by_name`
 
 ## Stamps — Stamp Tools
@@ -245,6 +246,15 @@ Source: `Editor/Tools/TerrainTools.cs`
 - `terrain_flatten`
 - `terrain_paint_texture`
 - `terrain_add_trees`
+
+## UAGBridge — UAG Bridge Tools
+
+Validates and realizes qFoldIT Universal Assembly Graphs by calling this toolbelt's own tools — the Universal World Interface adapter connecting Unity to the rest of the qFoldIT stack.
+
+Source: `Editor/Tools/UAGBridgeTools.cs`
+
+- `uag_validate`
+- `uag_apply`
 
 ## UI — UI Tools
 

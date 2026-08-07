@@ -1,6 +1,6 @@
 # qFoldIT Toolbelt — Unity
 
-**102 composite editor-automation tools for Unity, exposed to AI agents through Unity's own official MCP bridge.**
+**105 composite editor-automation tools for Unity, exposed to AI agents through Unity's own official MCP bridge.**
 
 > Built by **qFoldIT** — foundation release, 2026
 
@@ -68,7 +68,7 @@ See [ARCHITECTURE.md](ARCHITECTURE.md) for the full design and
    `Saved/QFoldIT_Toolbelt/tool_manifest.json` for agents that prefer to
    load a static manifest instead of calling MCP's live `list tools`.
 
-## Tool categories (102 tools total)
+## Tool categories (105 tools total)
 
 | Category | Tools | What it covers |
 |----------|:-----:|-----------------|
@@ -90,21 +90,31 @@ See [ARCHITECTURE.md](ARCHITECTURE.md) for the full design and
 | Procedural | 2 | 8 geometric placement patterns (grid, circle, arc, spiral, line, wave, helix, radial) plus a symmetrical arena generator. |
 | Project | 1 | Standard folder scaffold plus a boilerplate GameManager singleton MonoBehaviour. |
 | SceneManagement | 5 | Create, load, unload, activate, and save scenes in a multi-scene setup. |
-| Scene | 7 | Spawn, transform, clone, delete, parent, list, and find GameObjects in the active scene. |
+| Scene | 8 | Spawn, transform, clone, delete, parent, list, and find GameObjects in the active scene. |
 | Stamps | 3 | Save a selection as a reusable stamp; place it anywhere with rotation; list saved stamps. |
 | TagsLayers | 4 | Create and assign tags and layers, including recursive layer assignment. |
 | Terrain | 5 | Create terrain, sculpt hills/craters, flatten, paint textures, scatter trees. |
+| UAGBridge | 2 | Validates and realizes qFoldIT Universal Assembly Graphs by calling this toolbelt's own tools — the Universal World Interface adapter connecting Unity to the rest of the qFoldIT stack. |
 | UI | 7 | Build uGUI Canvas hierarchies: buttons, text, panels, sliders, images, anchor presets. |
 | Utility | 4 | Batch rename, Game view screenshots, Editor undo/redo. |
 | WorldState | 1 | Exports the full scene graph (names, components, transforms, parents) to JSON for AI context. |
 
 ## Roadmap to parity
 
-This release brings the toolbelt to **102 real tools** across 24 categories
+This release brings the toolbelt to **105 real tools** across 25 categories
 — still short of UEFN Toolbelt's 355, but a large step up from the initial
-25-tool foundation release. Structured to keep growing the same way: new
-files under `Editor/Tools/`, each adding `[McpTool]` methods, tracked in
-`registry.json`. See [ARCHITECTURE.md](ARCHITECTURE.md#extending-the-toolbelt).
+25-tool foundation release. More importantly, this release adds the
+**UAG Bridge** (`uag_validate` / `uag_apply`): the piece that actually
+connects UNITY-TOOLBELT to the rest of the qFoldIT stack
+(SOS → SKG → SEM → UAG → UWI → MCP), mirroring UEFN-TOOLBELT's
+`unreal-world-builder` skill — validates a Universal Assembly Graph, then
+realizes it by calling this toolbelt's own existing tools, reporting any
+node/connection/constraint/interaction type it can't map instead of
+skipping it silently. See [docs/UAG_BRIDGE.md](docs/UAG_BRIDGE.md) for the
+exact contract and mapping table.
+
+Structured to keep growing the same way: new files under `Editor/Tools/`,
+each adding `[McpTool]` methods, tracked in `registry.json`.
 
 Categories still on the list: Cinemachine-native camera rigs (as an
 optional dependency alongside the built-in follow behaviour), Addressables

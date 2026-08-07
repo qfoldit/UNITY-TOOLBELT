@@ -36,7 +36,9 @@ qfoldit-unity-toolbelt/
 ├── Editor/
 │   ├── QFoldIT.Toolbelt.Editor.asmdef   references Unity.AI.MCP.Editor, URP runtime, UGUI
 │   ├── Core/
-│   │   └── ToolbeltRegistry.cs   category metadata + manifest export menu item
+│   │   ├── ToolbeltRegistry.cs   category metadata + manifest export menu item
+│   │   ├── UagModel.cs       UAG v0.1 data model (POCO, zero UnityEngine dependency)
+│   │   └── UagValidator.cs   dangling-ref/cycle/gap validation (zero UnityEngine dependency)
 │   └── Tools/
 │       ├── SceneTools.cs         spawn/transform/clone/delete/parent/list/find
 │       ├── MaterialTools.cs      presets, bulk swap, team-color split
@@ -62,8 +64,10 @@ qfoldit-unity-toolbelt/
 │       ├── MeasurementTools.cs   distance, per-object bounds, scene bounds
 │       ├── UtilityTools.cs       batch rename, screenshot, undo/redo
 │       ├── TerrainTools.cs       terrain create/sculpt/flatten/paint/trees
-│       └── PostProcessingTools.cs   URP Volume: bloom, vignette, color, DoF
+│       ├── PostProcessingTools.cs   URP Volume: bloom, vignette, color, DoF
+│       └── UAGBridgeTools.cs    uag_validate / uag_apply — see docs/UAG_BRIDGE.md
 ├── docs/TOOL_REFERENCE.md
+├── docs/UAG_BRIDGE.md            UAG contract, mapping table, verification notes
 ├── registry.json                 plugin manifest (mirrors UEFN Toolbelt's format)
 └── Tests/Editor/                 edit-mode smoke tests
 ```

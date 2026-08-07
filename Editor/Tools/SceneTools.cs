@@ -211,6 +211,26 @@ namespace QFoldIT.Toolbelt.Editor.Tools
             return new { success = true, scene = scene.name, object_count = results.Count, objects = results };
         }
 
+        // ── spawn_group_node ───────────────────────────────────────────
+        public class SpawnGroupNodeParams
+        {
+            [McpDescription("Name for the new empty container GameObject", Required = true)]
+            public string Name { get; set; }
+            public float X { get; set; } = 0f;
+            public float Y { get; set; } = 0f;
+            public float Z { get; set; } = 0f;
+        }
+
+        [McpTool("spawn_group_node", "Creates an empty GameObject with no renderer — a pure transform container for grouping children (maps UAG's 'group' node type, which has no Unity primitive of its own).")]
+        public static object SpawnGroupNode(SpawnGroupNodeParams p)
+        {
+            var go = new GameObject(p.Name);
+            go.transform.position = new Vector3(p.X, p.Y, p.Z);
+
+            Undo.RegisterCreatedObjectUndo(go, "qFoldIT: Spawn Group Node");
+            return new { success = true, name = go.name };
+        }
+
         // ── scene_find_by_name ──────────────────────────────────────────
         public class FindByNameParams
         {
