@@ -1,0 +1,65 @@
+{
+  "spec": "qfoldit.engine-adapter/0.1",
+  "engine": {
+    "id": "unity",
+    "name": "Unity",
+    "version": "2023.1+"
+  },
+  "adapter": {
+    "id": "qfoldit-unity-toolbelt",
+    "version": "0.2.0"
+  },
+  "contracts": {
+    "uag": "qfoldit.uag/0.1"
+  },
+  "capabilities": [
+    { "id": "scene.graph", "level": "native", "status": "supported" },
+    { "id": "scene.snapshot", "level": "adapter", "status": "supported" },
+    { "id": "node.create", "level": "native", "status": "supported" },
+    { "id": "node.update", "level": "native", "status": "supported" },
+    { "id": "node.delete", "level": "native", "status": "supported" },
+    { "id": "node.group", "level": "native", "status": "supported" },
+    { "id": "node.parent", "level": "native", "status": "supported" },
+    {
+      "id": "geometry.procedural",
+      "level": "adapter",
+      "status": "supported",
+      "notes": "8 placement patterns (grid/circle/arc/spiral/line/wave/helix/radial) via procedural_place, plus arena_generate. This was already real, working capability prior to this revision; the earlier 'partial' rating undercounted it."
+    },
+    { "id": "materials", "level": "native", "status": "supported" },
+    { "id": "camera", "level": "native", "status": "supported" },
+    { "id": "lighting", "level": "native", "status": "supported" },
+    { "id": "physics", "level": "native", "status": "supported" },
+    {
+      "id": "physics.joints",
+      "level": "native",
+      "status": "supported",
+      "notes": "physics_add_joint wraps Unity's real FixedJoint/HingeJoint/SpringJoint/ConfigurableJoint components. UAG joint_slider maps to Configurable (Unity has no direct Slider joint enum case) - functionally close, not axis-locked by this call alone; see docs/UAG_BRIDGE.md."
+    },
+    {
+      "id": "interaction",
+      "level": "adapter",
+      "status": "supported",
+      "notes": "interaction_create attaches a real, pre-compiled QFoldITInteractable component (Runtime/QFoldITInteractable.cs) with a working OnMouseDown -> UnityEvent wiring, for all 10 gameplay mechanics (construction, optimization, pattern_matching, rhythm, survival_defense, racing_tuning, spatial_puzzle, portal_exploration, investigation_annotation, competitive_microtasks) plus legacy triggers (on_click, selection, ...). Honest scope: this is real adapter-level infrastructure (a genuinely clickable, event-firing object), NOT native per-mechanic gameplay logic (rhythm timing windows, survival wave spawning, etc.) - uag_apply emits an explicit warning per realized interaction saying so."
+    },
+    { "id": "uag.validate", "level": "adapter", "status": "supported" },
+    { "id": "uag.apply", "level": "adapter", "status": "supported" },
+    {
+      "id": "scientific.visualization",
+      "level": "adapter",
+      "status": "supported",
+      "notes": "scientific_visualization_create (Editor/Tools/ScientificVisualizationTools.cs) realizes every scientific_subject/<mechanic> UAG node type as a real, visible, mechanic-differentiated object (shape + material preset keyed by mechanic) with an optional floating world-space text label, plus a real QFoldITScientificBinding component holding the bound scientific-state:// URI as genuine, queryable component data. Honest scope: this does NOT implement gameplay-pattern.schema.json's optional live niagara_parameter_mapping feedback (continuous visual parameter updates from a running scientific process) - no current example pattern uses that field, and wiring a live data connection is out of scope for a generic engine adapter; see docs/UAG_BRIDGE.md."
+    }
+  ],
+  "actions": [
+    { "canonical": "scene.snapshot", "support": "adapter", "tools": ["world_state_export"] },
+    { "canonical": "node.group", "support": "adapter", "tools": ["spawn_group_node"] },
+    { "canonical": "geometry.procedural", "support": "adapter", "tools": ["procedural_place", "arena_generate"] },
+    { "canonical": "physics.joint.create", "support": "native", "tools": ["physics_add_joint"] },
+    { "canonical": "interaction.create", "support": "adapter", "tools": ["interaction_create", "interaction_fire"] },
+    { "canonical": "scientific.visualization.create", "support": "adapter", "tools": ["scientific_visualization_create"] },
+    { "canonical": "scientific.state.bind", "support": "adapter", "tools": ["scientific_binding_create"] },
+    { "canonical": "experience.validate", "support": "adapter", "tools": ["uag_validate"] },
+    { "canonical": "experience.apply", "support": "adapter", "tools": ["uag_apply"] }
+  ]
+}

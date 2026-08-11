@@ -1,18 +1,24 @@
 // qFoldIT Toolbelt for Unity — UagValidator.cs
 //
-// Implements exactly the three checks the UAG v0.1 schema requires an
-// engine adapter to perform BEFORE calling any MCP tool:
-//   1. Every parent_id / from_node / to_node / target_node / interaction
-//      target_node reference resolves to an existing node id.
-//   2. The parent_child hierarchy (via node.parent_id, reinforced by any
-//      parent_child connections) contains no cycles.
-//   3. Every node type, constraint type, and interaction is checked against
-//      what this engine adapter can actually realize — reported explicitly,
-//      never silently dropped.
+// Validates against qfoldit-engine-adapter-spec-v0.1's normative rules
+// (spec/SPECIFICATION.md §7, conformance/CONFORMANCE.md "UAG" section),
+// emitting the same structured error CODES as the spec's own reference
+// validator (conformance/run_conformance.py) so this adapter's output can
+// be checked directly against conformance/test_vectors.json — not just
+// "looks similar", but genuinely comparable string-for-string:
 //
-// This class has zero UnityEngine/UnityEditor dependencies so it can be
-// unit-tested in isolation (see Tests/Editor/UagValidatorTests.cs) without
-// needing a live Editor.
+//   INVALID_SCHEMA, DUPLICATE_NODE_ID, DANGLING_PARENT, HIERARCHY_CYCLE
+//
+// Three additional codes cover checks CONFORMANCE.md requires but the
+// reference script (intentionally minimal, per its own docstring) doesn't
+// implement — this adapter still needs them since "report unsupported
+// node/constraint/interaction types" is an explicit MUST:
+//
+//   UNSUPPORTED_NODE_TYPE, UNSUPPORTED_CONSTRAINT_TYPE, UNSUPPORTED_INTERACTION_TYPE
+//
+// Each error is a structured {code, message} object (matching
+// execution-report.schema.json's "errors": [{"type":"object"}] shape),
+// not a bare string — code for machine consumers, message for humans.
 
 using System.Collections.Generic;
 using System.Linq;
@@ -20,14 +26,20 @@ using QFoldIT.Toolbelt.Editor.Uag;
 
 namespace QFoldIT.Toolbelt.Editor.Core
 {
+    public readonly struct UagError
+    {
+        public readonly string Code;
+        public readonly string Message;
+        public UagError(string code, string message) { Code = code; Message = message; }
+    }
+
     public class UagValidationResult
     {
         public bool IsValid => Errors.Count == 0;
-        public List<string> Errors { get; } = new List<string>();
+        public List<UagError> Errors { get; } = new List<UagError>();
 
         // Gaps are not validation failures — the graph is still valid UAG,
-        // this engine just can't realize every part of it. Reported so the
-        // caller can decide what to do (skip, codegen a stub, ask a human).
+        // this engine just can't fully realize every part of it yet.
         public List<string> UnmappedNodeTypes { get; } = new List<string>();
         public List<string> UnmappedConstraintTypes { get; } = new List<string>();
         public List<UagInteraction> UnmappedInteractions { get; } = new List<UagInteraction>();
@@ -36,61 +48,63 @@ namespace QFoldIT.Toolbelt.Editor.Core
     public static class UagValidator
     {
         // What UAGBridgeTools.cs actually knows how to realize in Unity today.
+        // "scientific_subject/*" is a prefix match, handled separately below
+        // (any mechanic suffix is accepted — see IsMappedNodeType).
         public static readonly HashSet<string> MappedNodeTypes = new HashSet<string>
         {
-            "mesh", "light", "camera", "trigger_volume", "ui_panel", "particle_emitter", "audio_source", "group"
-            // "custom" is intentionally absent — there is no generic mapping for it.
+            "mesh", "light", "camera", "trigger_volume", "ui_panel", "particle_emitter",
+            "audio_source", "group",
+            // Legacy Phase-1 node types kept mapped for documents written
+            // against the earlier informal schema draft.
+            "molecular_structure", "interaction_zone"
         };
+
+        public static bool IsMappedNodeType(string type) =>
+            type != null && (MappedNodeTypes.Contains(type) || type.StartsWith("scientific_subject/"));
 
         public static readonly HashSet<string> MappedConstraintTypes = new HashSet<string>
         {
-            "physics_collision"
-            // interaction_grabbable / animation_trigger / logic_rule have no
-            // direct Unity primitive — they become codegen stubs instead
-            // (see UAGBridgeTools.GenerateInteractionStub), not a live realization.
+            "physics_collision", "physics.collision", "physics.joint"
         };
 
         public static UagValidationResult Validate(UagGraph graph)
         {
             var result = new UagValidationResult();
+
+            if (graph.Schema != UagGraph.SupportedSchema)
+                result.Errors.Add(new UagError("INVALID_SCHEMA", $"Expected schema '{UagGraph.SupportedSchema}', got '{graph.Schema ?? "(missing)"}'."));
+
             var nodeIds = new HashSet<string>(graph.Nodes.Select(n => n.Id));
 
-            // 1. Duplicate node ids
             var duplicateIds = graph.Nodes.GroupBy(n => n.Id).Where(g => g.Count() > 1).Select(g => g.Key);
             foreach (var dup in duplicateIds)
-                result.Errors.Add($"Duplicate node id '{dup}'.");
+                result.Errors.Add(new UagError("DUPLICATE_NODE_ID", $"Duplicate node id '{dup}'."));
 
-            // 2. Dangling references
             foreach (var node in graph.Nodes)
-            {
-                if (!string.IsNullOrEmpty(node.ParentId) && !nodeIds.Contains(node.ParentId))
-                    result.Errors.Add($"Node '{node.Id}' has parent_id '{node.ParentId}' which does not exist.");
-            }
-            foreach (var conn in graph.Connections)
-            {
-                if (!nodeIds.Contains(conn.FromNode))
-                    result.Errors.Add($"Connection '{conn.Id}' from_node '{conn.FromNode}' does not exist.");
-                if (!nodeIds.Contains(conn.ToNode))
-                    result.Errors.Add($"Connection '{conn.Id}' to_node '{conn.ToNode}' does not exist.");
-            }
+                if (!string.IsNullOrEmpty(node.Parent) && !nodeIds.Contains(node.Parent))
+                    result.Errors.Add(new UagError("DANGLING_PARENT", $"Node '{node.Id}' has parent '{node.Parent}' which does not exist."));
+
             foreach (var constraint in graph.Constraints)
-            {
                 foreach (var target in constraint.TargetNodes)
                     if (!nodeIds.Contains(target))
-                        result.Errors.Add($"Constraint '{constraint.Id}' target_node '{target}' does not exist.");
-            }
-            foreach (var interaction in graph.Interactions)
-            {
-                if (!nodeIds.Contains(interaction.TargetNode))
-                    result.Errors.Add($"Interaction '{interaction.Id}' target_node '{interaction.TargetNode}' does not exist.");
-            }
+                        result.Errors.Add(new UagError("DANGLING_REFERENCE", $"Constraint '{constraint.Id}' target_node '{target}' does not exist."));
 
-            // 3. Cycle detection over the parent_id hierarchy (walk each node
-            // upward; a repeat visit means a cycle). parent_child connections
-            // are treated as reinforcing the same hierarchy, not a second
-            // independent one, per the schema's single-hierarchy model.
-            var parentOf = graph.Nodes.Where(n => !string.IsNullOrEmpty(n.ParentId) && nodeIds.Contains(n.ParentId))
-                                       .ToDictionary(n => n.Id, n => n.ParentId);
+            foreach (var interaction in graph.Interactions)
+                if (!string.IsNullOrEmpty(interaction.Target) && !nodeIds.Contains(interaction.Target))
+                    result.Errors.Add(new UagError("DANGLING_REFERENCE", $"Interaction '{interaction.Id}' target '{interaction.Target}' does not exist."));
+
+            foreach (var binding in graph.Bindings)
+                if (!string.IsNullOrEmpty(binding.Target) && !nodeIds.Contains(binding.Target))
+                    result.Errors.Add(new UagError("DANGLING_REFERENCE", $"Binding '{binding.Id}' target '{binding.Target}' does not exist."));
+
+            // Cycle detection over the parent hierarchy — identical algorithm
+            // to run_conformance.py's reference implementation (walk each
+            // node upward, a repeat visit means a cycle), extended slightly
+            // to also stop safely if a parent reference is dangling (already
+            // reported above as DANGLING_PARENT, not re-reported as a cycle).
+            var parentOf = graph.Nodes.Where(n => !string.IsNullOrEmpty(n.Parent) && nodeIds.Contains(n.Parent))
+                                       .ToDictionary(n => n.Id, n => n.Parent);
+            var cycleAlreadyReportedFor = new HashSet<string>();
             foreach (var start in nodeIds)
             {
                 var visited = new HashSet<string> { start };
@@ -99,26 +113,31 @@ namespace QFoldIT.Toolbelt.Editor.Core
                 {
                     if (!visited.Add(parent))
                     {
-                        result.Errors.Add($"Cycle detected in parent_child hierarchy involving node '{start}'.");
+                        if (cycleAlreadyReportedFor.Add(start))
+                            result.Errors.Add(new UagError("HIERARCHY_CYCLE", $"Cycle detected in parent hierarchy involving node '{start}'."));
                         break;
                     }
                     current = parent;
                 }
             }
 
-            // 4. Gap reporting (not an error — informational)
+            // Gap reporting (not an error — informational).
             foreach (var type in graph.Nodes.Select(n => n.Type).Distinct())
-                if (!MappedNodeTypes.Contains(type))
+                if (!IsMappedNodeType(type))
                     result.UnmappedNodeTypes.Add(type);
 
             foreach (var type in graph.Constraints.Select(c => c.Type).Distinct())
                 if (!MappedConstraintTypes.Contains(type))
                     result.UnmappedConstraintTypes.Add(type);
 
-            // No interaction trigger has a live 1:1 engine realization today —
-            // they always surface as gaps (turned into a codegen stub by
-            // uag_apply, never silently executed as fabricated behaviour).
-            result.UnmappedInteractions.AddRange(graph.Interactions);
+            // Interaction types are the 10 gameplay "mechanic" identifiers
+            // (construction, optimization, ...) per
+            // qfoldit-scientific-gameplay-framework-v0.1's compiler output,
+            // plus the legacy on_click/on_grab/... trigger vocabulary from
+            // the Phase-1 informal schema. Anything else is an explicit gap.
+            foreach (var interaction in graph.Interactions)
+                if (!UAGBridgeMechanics.MappedInteractionTypes.Contains(interaction.Type))
+                    result.UnmappedInteractions.Add(interaction);
 
             return result;
         }

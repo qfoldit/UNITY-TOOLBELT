@@ -19,15 +19,27 @@ namespace QFoldIT.Toolbelt.Editor.Tools
             public string Name { get; set; } = "Canvas";
             [McpDescription("Render mode", EnumType = typeof(RenderMode), Default = "ScreenSpaceOverlay")]
             public string RenderMode { get; set; } = "ScreenSpaceOverlay";
+            [McpDescription("World position, only meaningful when RenderMode is WorldSpace")]
+            public float X { get; set; } = 0f;
+            public float Y { get; set; } = 0f;
+            public float Z { get; set; } = 0f;
+            [McpDescription("Uniform scale, only meaningful when RenderMode is WorldSpace (world-space canvases default to a huge per-pixel size otherwise)", Default = 0.01f)]
+            public float WorldSpaceScale { get; set; } = 0.01f;
         }
 
-        [McpTool("ui_create_canvas", "Creates a Canvas GameObject with CanvasScaler and GraphicRaycaster, plus an EventSystem if none exists.")]
+        [McpTool("ui_create_canvas", "Creates a Canvas GameObject with CanvasScaler and GraphicRaycaster, plus an EventSystem if none exists. For RenderMode=WorldSpace, also positions and scales it at X/Y/Z so it's usable as in-world UI, not just screen overlay.")]
         public static object CreateCanvas(CreateCanvasParams p)
         {
             var go = new GameObject(p.Name, typeof(Canvas), typeof(CanvasScaler), typeof(GraphicRaycaster));
             var canvas = go.GetComponent<Canvas>();
             canvas.renderMode = (RenderMode)System.Enum.Parse(typeof(RenderMode), p.RenderMode, true);
             Undo.RegisterCreatedObjectUndo(go, "qFoldIT: Create Canvas");
+
+            if (canvas.renderMode == RenderMode.WorldSpace)
+            {
+                go.transform.position = new Vector3(p.X, p.Y, p.Z);
+                go.transform.localScale = Vector3.one * p.WorldSpaceScale;
+            }
 
             if (Object.FindFirstObjectByType<UnityEngine.EventSystems.EventSystem>() == null)
             {

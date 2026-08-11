@@ -1,6 +1,6 @@
 # qFoldIT Toolbelt — Unity
 
-**105 composite editor-automation tools for Unity, exposed to AI agents through Unity's own official MCP bridge.**
+**109 composite editor-automation tools for Unity, exposed to AI agents through Unity's own official MCP bridge.**
 
 > Built by **qFoldIT** — foundation release, 2026
 
@@ -68,7 +68,7 @@ See [ARCHITECTURE.md](ARCHITECTURE.md) for the full design and
    `Saved/QFoldIT_Toolbelt/tool_manifest.json` for agents that prefer to
    load a static manifest instead of calling MCP's live `list tools`.
 
-## Tool categories (105 tools total)
+## Tool categories (109 tools total)
 
 | Category | Tools | What it covers |
 |----------|:-----:|-----------------|
@@ -79,6 +79,7 @@ See [ARCHITECTURE.md](ARCHITECTURE.md) for the full design and
 | CodeGen | 1 | Generates a MonoBehaviour with real, bindable public fields for named scene objects. |
 | Components | 5 | Reflection-based generic add/remove/get/set/list for any component type. |
 | BuildConsole | 3 | Execute menu items, trigger player builds, read console log entry count. |
+| Interaction | 2 | Real interaction realization: attaches a working, pre-compiled QFoldITInteractable component (click-wired UnityEvent) for any of the 10 gameplay mechanics or legacy triggers. |
 | Lighting | 6 | Create lights, set skybox/ambient/fog, bake lightmaps, apply full lighting presets. |
 | Materials | 4 | 12 material presets, bulk swap by name match, team-color split, preset listing. |
 | Measurement | 3 | Distance between objects, per-object bounds, and full-scene bounds. |
@@ -91,6 +92,7 @@ See [ARCHITECTURE.md](ARCHITECTURE.md) for the full design and
 | Project | 1 | Standard folder scaffold plus a boilerplate GameManager singleton MonoBehaviour. |
 | SceneManagement | 5 | Create, load, unload, activate, and save scenes in a multi-scene setup. |
 | Scene | 8 | Spawn, transform, clone, delete, parent, list, and find GameObjects in the active scene. |
+| ScientificVisualization | 2 | Real scientific-state visualization: mechanic-differentiated visible anchors with optional world-space labels, plus QFoldITScientificBinding components for live scientific-state URIs. |
 | Stamps | 3 | Save a selection as a reusable stamp; place it anywhere with rotation; list saved stamps. |
 | TagsLayers | 4 | Create and assign tags and layers, including recursive layer assignment. |
 | Terrain | 5 | Create terrain, sculpt hills/craters, flatten, paint textures, scatter trees. |
@@ -101,25 +103,51 @@ See [ARCHITECTURE.md](ARCHITECTURE.md) for the full design and
 
 ## Roadmap to parity
 
-This release brings the toolbelt to **105 real tools** across 25 categories
-— still short of UEFN Toolbelt's 355, but a large step up from the initial
-25-tool foundation release. More importantly, this release adds the
-**UAG Bridge** (`uag_validate` / `uag_apply`): the piece that actually
-connects UNITY-TOOLBELT to the rest of the qFoldIT stack
-(SOS → SKG → SEM → UAG → UWI → MCP), mirroring UEFN-TOOLBELT's
-`unreal-world-builder` skill — validates a Universal Assembly Graph, then
-realizes it by calling this toolbelt's own existing tools, reporting any
-node/connection/constraint/interaction type it can't map instead of
-skipping it silently. See [docs/UAG_BRIDGE.md](docs/UAG_BRIDGE.md) for the
-exact contract and mapping table.
+This release brings the toolbelt to **109 real tools** across 28
+categories — still short of UEFN Toolbelt's 355, but well past the
+25-tool foundation. More importantly, this revision adapts the whole UAG
+Bridge to **qfoldit-engine-adapter-spec-v0.1**, the formal spec package
+(not the earlier informal Phase-1 draft): `UagModel.cs` now matches the
+normative `schemas/uag.schema.json` exactly (`schema`/`scene`/
+`node.parent`/`bindings[]`), `uag_validate` emits `{code, message}` errors
+matching the spec's own `conformance/test_vectors.json` byte-for-byte, and
+`qfoldit.adapter.json` (this repo's root) is strictly valid against
+`schemas/adapter-manifest.schema.json`.
+
+**Real, verified milestone**: running the spec's own unmodified
+`reference/compiler.py` (from `qfoldit-scientific-gameplay-framework-v0.1`)
+against this repo's actual `qfoldit.adapter.json` now compiles all 5
+currently-unlocked gameplay patterns with `status=success` and zero gaps —
+up from 0/5 before this revision (see `cross-engine-compile-report.md` in
+that package). This was earned by building real capability, not by
+editing the manifest's status field by hand:
+
+- **`interaction`** (blocked 4/5 patterns): `Runtime/QFoldITInteractable.cs`
+  — a real, pre-compiled MonoBehaviour in a dedicated Runtime assembly
+  (works in Play Mode and builds, not just the Editor) with a working
+  `OnMouseDown → UnityEvent` wiring, for all 10 gameplay mechanics plus
+  legacy triggers. `interaction_create` attaches it to any node.
+- **`scientific.visualization`** (blocked 5/5 patterns):
+  `ScientificVisualizationTools.cs` realizes every UAG
+  `scientific_subject/<mechanic>` node as a real, visible,
+  mechanic-differentiated object (shape + material preset keyed by
+  mechanic), with `Runtime/QFoldITScientificBinding.cs` giving `bindings[]`
+  genuine, queryable substance instead of accepting-and-discarding a
+  `scientific-state://` URI.
+- **`geometry.procedural`** (blocked 2/5 patterns): already real, working
+  capability from an earlier revision (`procedural_place`'s 8 patterns +
+  `arena_generate`) — the manifest's earlier "partial" rating undercounted
+  it; no new code was needed, just an honest status correction.
+
+See [docs/UAG_BRIDGE.md](docs/UAG_BRIDGE.md) for the full contract,
+mapping table, and — importantly — what these capabilities honestly do
+*not* cover (native per-mechanic gameplay logic, live Niagara-style
+parameter-mapped feedback). `tests/conformance/` runs the spec's real
+`test_vectors.json` against the actual, unmodified `UagValidator.cs`.
 
 Structured to keep growing the same way: new files under `Editor/Tools/`,
 each adding `[McpTool]` methods, tracked in `registry.json`.
 
-Categories still on the list: Cinemachine-native camera rigs (as an
-optional dependency alongside the built-in follow behaviour), Addressables
-workflow, ProBuilder procedural geometry, Timeline/cutscene tools,
-Input System action asset generation, localization table scaffolding.
 
 ## License
 

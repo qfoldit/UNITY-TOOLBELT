@@ -37,8 +37,9 @@ qfoldit-unity-toolbelt/
 │   ├── QFoldIT.Toolbelt.Editor.asmdef   references Unity.AI.MCP.Editor, URP runtime, UGUI
 │   ├── Core/
 │   │   ├── ToolbeltRegistry.cs   category metadata + manifest export menu item
-│   │   ├── UagModel.cs       UAG v0.1 data model (POCO, zero UnityEngine dependency)
-│   │   └── UagValidator.cs   dangling-ref/cycle/gap validation (zero UnityEngine dependency)
+│   │   ├── UagModel.cs       UAG data model conforming to qfoldit.uag/0.1 (POCO, zero UnityEngine dependency)
+│   │   ├── UagValidator.cs   dangling-ref/cycle/gap validation with {code,message} errors (zero UnityEngine dependency)
+│   │   └── UAGBridgeMechanics.cs   shared interaction-type vocabulary (10 gameplay mechanics + legacy triggers)
 │   └── Tools/
 │       ├── SceneTools.cs         spawn/transform/clone/delete/parent/list/find
 │       ├── MaterialTools.cs      presets, bulk swap, team-color split
@@ -65,11 +66,19 @@ qfoldit-unity-toolbelt/
 │       ├── UtilityTools.cs       batch rename, screenshot, undo/redo
 │       ├── TerrainTools.cs       terrain create/sculpt/flatten/paint/trees
 │       ├── PostProcessingTools.cs   URP Volume: bloom, vignette, color, DoF
-│       └── UAGBridgeTools.cs    uag_validate / uag_apply — see docs/UAG_BRIDGE.md
+│       ├── UAGBridgeTools.cs    uag_validate / uag_apply — see docs/UAG_BRIDGE.md
+│       ├── InteractionTools.cs  interaction_create / interaction_fire — real QFoldITInteractable wiring
+│       └── ScientificVisualizationTools.cs   scientific_visualization_create / scientific_binding_create
+├── Runtime/
+│   ├── QFoldIT.Toolbelt.Runtime.asmdef   a genuine RUNTIME assembly (not Editor-only) — these components must work in Play Mode and builds
+│   ├── QFoldITInteractable.cs    real MonoBehaviour: OnMouseDown -> UnityEvent, backing the 'interaction' capability
+│   └── QFoldITScientificBinding.cs   real MonoBehaviour: holds a bound scientific-state:// URI as queryable component data
 ├── docs/TOOL_REFERENCE.md
-├── docs/UAG_BRIDGE.md            UAG contract, mapping table, verification notes
+├── docs/UAG_BRIDGE.md            UAG contract, mapping table, capability notes, verification notes
+├── qfoldit.adapter.json           strictly valid against qfoldit-engine-adapter-spec-v0.1's adapter-manifest.schema.json
 ├── registry.json                 plugin manifest (mirrors UEFN Toolbelt's format)
-└── Tests/Editor/                 edit-mode smoke tests
+├── Tests/Editor/                 edit-mode NUnit tests, including UagValidatorTests.cs
+└── tests/conformance/            standalone mono tests against the REAL spec test_vectors.json (see its README)
 ```
 
 ## Tool authoring convention

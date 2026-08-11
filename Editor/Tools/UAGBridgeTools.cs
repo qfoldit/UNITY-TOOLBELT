@@ -1,19 +1,26 @@
 // qFoldIT Toolbelt for Unity — UAGBridgeTools.cs
 // Category: UAGBridge
 //
-// This is the piece that actually connects UNITY-TOOLBELT to the rest of
-// the qFoldIT stack (SOS -> SKG -> SEM -> UAG -> UWI -> MCP). Everything
-// else in this repo is a library of composite Unity actions; this file is
-// the adapter that turns a Universal Assembly Graph into calls against
-// that library — mirroring UEFN-TOOLBELT's unreal-world-builder skill:
-// validate first, call existing tools (never re-implement primitives
-// here), and report gaps explicitly instead of papering over them.
+// Adapted to qfoldit-engine-adapter-spec-v0.1's formal contract:
+//   - UagModel.cs now matches schemas/uag.schema.json (schema/scene/
+//     node.parent/bindings), not the earlier informal Phase-1 shape.
+//   - uag_validate emits {code, message} errors matching
+//     conformance/test_vectors.json's error codes.
+//   - uag_apply's return shape now matches
+//     schemas/execution-report.schema.json: status (success/partial/
+//     failed), engine, adapter, adapter_version, created/updated/skipped,
+//     gaps/warnings/errors, provenance.
+//   - "scientific_subject/<mechanic>" nodes and the 10 gameplay-mechanic
+//     interaction types (construction, optimization, ...) — the exact
+//     shape qfoldit-scientific-gameplay-framework-v0.1's
+//     reference/compiler.py emits — are now REALLY realized (a visible,
+//     mechanic-differentiated visualization anchor; a real, working
+//     QFoldITInteractable component), not left as unmapped gaps.
 //
-// Two tools:
-//   uag_validate — pure validation + gap report, no engine mutation.
-//   uag_apply    — runs uag_validate internally; if valid, realizes the
-//                  graph by calling the same tool methods other MCP
-//                  callers use (SceneTools.SpawnPrimitive, etc.).
+// Design principle carried over unchanged from Phase 1: this file never
+// re-implements a primitive — every node/constraint/interaction/binding
+// it can realize, it realizes by calling this toolbelt's own
+// already-registered tools.
 
 using System.Collections.Generic;
 using System.Linq;
@@ -28,14 +35,18 @@ namespace QFoldIT.Toolbelt.Editor.Tools
 {
     public static class UAGBridgeTools
     {
+        public const string AdapterId = "qfoldit-unity-toolbelt";
+        public const string AdapterVersion = "0.2.0";
+        public const string EngineId = "unity";
+
         // ── uag_validate ────────────────────────────────────────────────
         public class UagValidateParams
         {
-            [McpDescription("Full UAG v0.1 document as a JSON string (see qfoldit/UEFN-TOOLBELT's uag_schema.md)", Required = true)]
+            [McpDescription("Full UAG document as a JSON string, conforming to qfoldit.uag/0.1 (schemas/uag.schema.json)", Required = true)]
             public string UagJson { get; set; }
         }
 
-        [McpTool("uag_validate", "Validates a UAG v0.1 graph against this engine's adapter: dangling id references, parent_child cycles, and which node/constraint/interaction types this adapter can and cannot realize. Makes no changes to the scene.")]
+        [McpTool("uag_validate", "Validates a UAG document against this engine's adapter: schema id, duplicate/dangling references, hierarchy cycles, and which node/constraint/interaction types this adapter can and cannot realize. Makes no changes to the scene. Errors are {code, message} objects matching qfoldit-engine-adapter-spec-v0.1's conformance vectors.")]
         public static object UagValidateTool(UagValidateParams p)
         {
             UagGraph graph;
@@ -47,171 +58,189 @@ namespace QFoldIT.Toolbelt.Editor.Tools
             {
                 success = true,
                 is_valid = result.IsValid,
-                errors = result.Errors,
+                errors = result.Errors.Select(e => new { code = e.Code, message = e.Message }),
                 unmapped_node_types = result.UnmappedNodeTypes,
                 unmapped_constraint_types = result.UnmappedConstraintTypes,
-                unmapped_interactions = result.UnmappedInteractions.Select(i => new { i.Id, i.Trigger, i.TargetNode, i.Action }),
+                unmapped_interactions = result.UnmappedInteractions.Select(i => new { i.Id, i.Type, i.Target }),
                 node_count = graph.Nodes.Count,
-                connection_count = graph.Connections.Count,
                 constraint_count = graph.Constraints.Count,
-                interaction_count = graph.Interactions.Count
+                interaction_count = graph.Interactions.Count,
+                binding_count = graph.Bindings.Count
             };
         }
 
         // ── uag_apply ───────────────────────────────────────────────────
         public class UagApplyParams
         {
-            [McpDescription("Full UAG v0.1 document as a JSON string", Required = true)]
+            [McpDescription("Full UAG document as a JSON string", Required = true)]
             public string UagJson { get; set; }
-            [McpDescription("If true, generates a wired MonoBehaviour stub referencing every node with an unmapped interaction/logic constraint, instead of leaving them unrealized with no follow-up artifact", Default = true)]
-            public bool GenerateInteractionStub { get; set; } = true;
-            [McpDescription("Output path for the generated interaction stub script, relative to Assets/", Default = "Scripts/Generated/UagInteractionHandlers.cs")]
-            public string StubOutputPath { get; set; } = "Scripts/Generated/UagInteractionHandlers.cs";
         }
 
-        [McpTool("uag_apply", "Realizes a validated UAG v0.1 graph in the active scene by calling this toolbelt's own tools (spawn_primitive, light_create, parent_object, physics_add_collider, etc.) — the Universal World Interface adapter for Unity. Aborts with no scene changes if validation fails.")]
+        [McpTool("uag_apply", "Realizes a validated UAG document in the active scene by calling this toolbelt's own tools. Returns a structured execution report (status/created/updated/skipped/gaps/warnings/errors) matching schemas/execution-report.schema.json. Aborts with no scene changes if validation fails.")]
         public static object UagApply(UagApplyParams p)
         {
             UagGraph graph;
             try { graph = UagGraph.Parse(p.UagJson); }
-            catch (System.Exception ex) { return new { success = false, error = $"Could not parse UAG JSON: {ex.Message}" }; }
+            catch (System.Exception ex)
+            {
+                return Report("failed", errors: new object[] { new { code = "PARSE_ERROR", message = ex.Message } });
+            }
 
             var validation = UagValidator.Validate(graph);
             if (!validation.IsValid)
-                return new { success = false, error = "Validation failed — no changes made.", validation_errors = validation.Errors };
+            {
+                return Report("failed",
+                    errors: validation.Errors.Select(e => (object)new { code = e.Code, message = e.Message }),
+                    provenance: Provenance(graph));
+            }
 
-            var idMap = new Dictionary<string, string>();          // uag node id -> engine object name
-            var nodeFailures = new List<object>();
-            var unrealizedNodeIds = new HashSet<string>();          // nodes that exist in the graph but weren't created
+            var created = new List<string>();
+            var updated = new List<string>();
+            var skipped = new List<string>();
+            var gaps = new List<object>();
+            var warnings = new List<object>();
+            var errors = new List<object>();
+            var unrealizedNodeIds = new HashSet<string>();
 
-            // ── Pass 1: create every node (flat, at its raw transform) ──
+            // ── Pass 1: create every node ──
             foreach (var node in graph.Nodes)
             {
+                if (!UagValidator.IsMappedNodeType(node.Type))
+                {
+                    unrealizedNodeIds.Add(node.Id);
+                    skipped.Add(node.Id);
+                    gaps.Add(new { element = "node", id = node.Id, type = node.Type, reason = "unmapped node type" });
+                    continue;
+                }
+
                 try
                 {
-                    if (!UagValidator.MappedNodeTypes.Contains(node.Type))
-                    {
-                        unrealizedNodeIds.Add(node.Id);
-                        continue; // reported via unmapped_node_types below, not silently invented
-                    }
-
                     CreateNode(node);
-                    idMap[node.Id] = node.Id; // every creation call below sets Name = node.Id directly
+                    created.Add(node.Id);
                     ApplyTransform(node);
                 }
                 catch (System.Exception ex)
                 {
                     unrealizedNodeIds.Add(node.Id);
-                    nodeFailures.Add(new { node_id = node.Id, type = node.Type, error = ex.Message });
+                    skipped.Add(node.Id);
+                    errors.Add(new { code = "NODE_CREATE_FAILED", node_id = node.Id, type = node.Type, message = ex.Message });
                 }
             }
 
-            // ── Pass 2: parent_id hierarchy ──
-            int reparented = 0;
+            // ── Pass 2: parent hierarchy ──
             foreach (var node in graph.Nodes)
             {
-                if (string.IsNullOrEmpty(node.ParentId) || unrealizedNodeIds.Contains(node.Id) || unrealizedNodeIds.Contains(node.ParentId))
+                if (string.IsNullOrEmpty(node.Parent) || unrealizedNodeIds.Contains(node.Id) || unrealizedNodeIds.Contains(node.Parent))
                     continue;
-                SceneTools.ParentObject(new SceneTools.ParentObjectParams { Child = node.Id, Parent = node.ParentId, WorldPositionStays = true });
-                reparented++;
+                SceneTools.ParentObject(new SceneTools.ParentObjectParams { Child = node.Id, Parent = node.Parent, WorldPositionStays = true });
+                if (!updated.Contains(node.Id)) updated.Add(node.Id);
             }
 
-            // ── Pass 3: connections ──
-            int connectionsApplied = 0;
-            var unmappedConnectionTypes = new HashSet<string>();
-            foreach (var conn in graph.Connections)
-            {
-                if (unrealizedNodeIds.Contains(conn.FromNode) || unrealizedNodeIds.Contains(conn.ToNode)) continue;
-
-                switch (conn.Type)
-                {
-                    case "parent_child":
-                        SceneTools.ParentObject(new SceneTools.ParentObjectParams { Child = conn.FromNode, Parent = conn.ToNode, WorldPositionStays = true });
-                        connectionsApplied++;
-                        break;
-                    case "joint_fixed":
-                    case "joint_hinge":
-                    case "joint_slider":
-                        // physics_add_joint's JointType enum has no direct "Slider"
-                        // case; Configurable is the closest approximation (it can be
-                        // set up as a slider by locking the right axes, but this
-                        // call alone does not configure those axis limits).
-                        var jointType = conn.Type == "joint_fixed" ? "Fixed" : conn.Type == "joint_hinge" ? "Hinge" : "Configurable";
-                        PhysicsTools.AddJoint(new PhysicsTools.AddJointParams { Name = conn.FromNode, JointType = jointType, ConnectedBody = conn.ToNode });
-                        connectionsApplied++;
-                        break;
-                    default:
-                        unmappedConnectionTypes.Add(conn.Type); // e.g. data_link — no Unity primitive
-                        break;
-                }
-            }
-
-            // ── Pass 4: constraints ──
-            int constraintsApplied = 0;
-            var interactionConstraintNodeIds = new HashSet<string>();
+            // ── Pass 3: constraints ──
             foreach (var constraint in graph.Constraints)
             {
                 var validTargets = constraint.TargetNodes.Where(t => !unrealizedNodeIds.Contains(t)).ToList();
-                if (constraint.Type == "physics_collision")
+                switch (constraint.Type)
                 {
-                    foreach (var target in validTargets)
-                    {
-                        string shape = (string)constraint.Properties["shape"] ?? "Box";
-                        PhysicsTools.AddCollider(new PhysicsTools.AddColliderParams { Name = target, Shape = shape, IsTrigger = false });
-                        PhysicsTools.AddRigidbody(new PhysicsTools.AddRigidbodyParams { Name = target });
-                        constraintsApplied++;
-                    }
-                }
-                else
-                {
-                    // interaction_grabbable / animation_trigger / logic_rule — no
-                    // direct Unity primitive; collect for the codegen stub below.
-                    foreach (var t in validTargets) interactionConstraintNodeIds.Add(t);
+                    case "physics_collision":
+                    case "physics.collision":
+                        foreach (var target in validTargets)
+                        {
+                            string shape = (string)constraint.Properties["shape"] ?? "Box";
+                            PhysicsTools.AddCollider(new PhysicsTools.AddColliderParams { Name = target, Shape = shape, IsTrigger = false });
+                            PhysicsTools.AddRigidbody(new PhysicsTools.AddRigidbodyParams { Name = target });
+                            if (!updated.Contains(target)) updated.Add(target);
+                        }
+                        break;
+                    case "physics.joint":
+                        if (validTargets.Count >= 1)
+                        {
+                            string jointType = (string)constraint.Properties["joint_type"] ?? "Fixed";
+                            string connected = validTargets.Count >= 2 ? validTargets[1] : "";
+                            PhysicsTools.AddJoint(new PhysicsTools.AddJointParams { Name = validTargets[0], JointType = jointType, ConnectedBody = connected });
+                            if (!updated.Contains(validTargets[0])) updated.Add(validTargets[0]);
+                        }
+                        break;
+                    default:
+                        gaps.Add(new { element = "constraint", id = constraint.Id, type = constraint.Type, reason = "unmapped constraint type" });
+                        break;
                 }
             }
+
+            // ── Pass 4: interactions — REAL realization via InteractionTools ──
             foreach (var interaction in graph.Interactions)
-                if (!unrealizedNodeIds.Contains(interaction.TargetNode))
-                    interactionConstraintNodeIds.Add(interaction.TargetNode);
-
-            // ── Optional: generate a wired stub for everything this adapter
-            // couldn't realize live, so the gap produces a usable artifact
-            // instead of just a text report. ──
-            string stubPath = null;
-            if (p.GenerateInteractionStub && interactionConstraintNodeIds.Count > 0)
             {
-                var className = "UagInteractionHandlers";
-                var codegenResult = CodeGenTools.CodegenMonoBehaviour(new CodeGenTools.CodegenMonoBehaviourParams
+                if (string.IsNullOrEmpty(interaction.Target) || unrealizedNodeIds.Contains(interaction.Target))
                 {
-                    ClassName = className,
-                    ObjectNames = string.Join(",", interactionConstraintNodeIds),
-                    OutputPath = p.StubOutputPath,
-                    Namespace = "QFoldIT.Generated"
+                    gaps.Add(new { element = "interaction", id = interaction.Id, type = interaction.Type, reason = "target node was not realized" });
+                    continue;
+                }
+                if (!UAGBridgeMechanics.MappedInteractionTypes.Contains(interaction.Type))
+                {
+                    gaps.Add(new { element = "interaction", id = interaction.Id, type = interaction.Type, reason = "unmapped interaction type" });
+                    continue;
+                }
+
+                InteractionTools.Create(new InteractionTools.CreateParams
+                {
+                    Name = interaction.Target,
+                    InteractionType = interaction.Type,
+                    UagNodeId = interaction.Target
                 });
-                stubPath = $"Assets/{p.StubOutputPath}";
+                if (!updated.Contains(interaction.Target)) updated.Add(interaction.Target);
+
+                if (UAGBridgeMechanics.GameplayMechanics.Contains(interaction.Type))
+                {
+                    warnings.Add(new
+                    {
+                        code = "INTERACTABLE_WIRED_NOT_GAMEPLAY_COMPLETE",
+                        interaction_id = interaction.Id,
+                        message = $"'{interaction.Target}' now has a real, clickable QFoldITInteractable(InteractionType={interaction.Type}), but full '{interaction.Type}' gameplay logic (scoring, progression, failure states) is not implemented by this generic adapter — subscribe to its OnInteract event."
+                    });
+                }
             }
 
-            return new
+            // ── Pass 5: bindings — REAL realization via ScientificVisualizationTools.Bind ──
+            foreach (var binding in graph.Bindings)
             {
-                success = true,
-                nodes_created = idMap.Count,
-                node_failures = nodeFailures,
-                unmapped_node_types = validation.UnmappedNodeTypes,
-                nodes_reparented = reparented,
-                connections_applied = connectionsApplied,
-                unmapped_connection_types = unmappedConnectionTypes,
-                constraints_applied = constraintsApplied,
-                unmapped_constraint_types = validation.UnmappedConstraintTypes,
-                unmapped_interactions = validation.UnmappedInteractions.Select(i => new { i.Id, i.Trigger, i.TargetNode, i.Action }),
-                interaction_stub_path = stubPath,
-                id_map = idMap
-            };
+                if (string.IsNullOrEmpty(binding.Target) || unrealizedNodeIds.Contains(binding.Target))
+                {
+                    gaps.Add(new { element = "binding", id = binding.Id, reason = "target node was not realized" });
+                    continue;
+                }
+                ScientificVisualizationTools.Bind(new ScientificVisualizationTools.BindParams
+                {
+                    Name = binding.Target,
+                    BindingId = binding.Id,
+                    SourceUri = binding.Source
+                });
+                if (!updated.Contains(binding.Target)) updated.Add(binding.Target);
+            }
+
+            string status = errors.Count > 0 && created.Count == 0 ? "failed"
+                : (gaps.Count > 0 || warnings.Count > 0 || errors.Count > 0) ? "partial"
+                : "success";
+
+            return Report(status, created, updated, skipped, gaps, warnings, errors, Provenance(graph));
         }
 
         // ── Node type -> existing-tool dispatch ────────────────────────
         private static void CreateNode(UagNode node)
         {
-            var pos = node.Transform?.Position ?? new float[] { 0, 0, 0 };
-            float x = pos.Length > 0 ? pos[0] : 0, y = pos.Length > 1 ? pos[1] : 0, z = pos.Length > 2 ? pos[2] : 0;
+            var pos = node.Position;
+            float x = pos[0], y = pos[1], z = pos[2];
+
+            if (node.Type.StartsWith("scientific_subject/"))
+            {
+                string mechanic = node.Type.Substring("scientific_subject/".Length);
+                ScientificVisualizationTools.Create(new ScientificVisualizationTools.CreateParams
+                {
+                    Name = node.Id, Mechanic = mechanic, X = x, Y = y, Z = z,
+                    Label = (string)node.Properties["label"] ?? "",
+                    SourceUri = (string)node.Properties["source"] ?? ""
+                });
+                return;
+            }
 
             switch (node.Type)
             {
@@ -221,6 +250,29 @@ namespace QFoldIT.Toolbelt.Editor.Tools
                         AssetTools.InstantiatePrefab(new AssetTools.InstantiatePrefabParams { PrefabPath = meshRef, X = x, Y = y, Z = z, Name = node.Id });
                     else
                         SceneTools.SpawnPrimitive(new SceneTools.SpawnPrimitiveParams { Type = (string)node.Properties["primitive"] ?? "Cube", Name = node.Id, X = x, Y = y, Z = z });
+                    break;
+
+                case "molecular_structure":
+                    // Legacy node type from the spec's own hand-authored example
+                    // (examples/protein-folding.uag.json) — treated as a
+                    // scientific subject with no specific mechanic scheme.
+                    ScientificVisualizationTools.Create(new ScientificVisualizationTools.CreateParams
+                    {
+                        Name = node.Id, Mechanic = "", X = x, Y = y, Z = z,
+                        SourceUri = (string)node.Properties["source"] ?? ""
+                    });
+                    break;
+
+                case "interaction_zone":
+                    SceneTools.SpawnPrimitive(new SceneTools.SpawnPrimitiveParams { Type = "Cube", Name = node.Id, X = x, Y = y, Z = z });
+                    MaterialTools.ApplyPreset(new MaterialTools.ApplyPresetParams { Name = node.Id, Preset = "Ghost" });
+                    PhysicsTools.AddCollider(new PhysicsTools.AddColliderParams { Name = node.Id, Shape = "Box", IsTrigger = true });
+                    InteractionTools.Create(new InteractionTools.CreateParams
+                    {
+                        Name = node.Id,
+                        InteractionType = (string)node.Properties["interaction"] ?? "selection",
+                        UagNodeId = node.Id
+                    });
                     break;
 
                 case "light":
@@ -238,9 +290,10 @@ namespace QFoldIT.Toolbelt.Editor.Tools
                     break;
 
                 case "audio_source":
+                    SceneTools.SpawnGroupNode(new SceneTools.SpawnGroupNodeParams { Name = node.Id, X = x, Y = y, Z = z });
                     AudioTools.AddSource(new AudioTools.AddSourceParams
                     {
-                        Name = CreateEmptyAnchor(node.Id, x, y, z),
+                        Name = node.Id,
                         ClipPath = (string)node.Properties["clip_ref"] ?? "",
                         Loop = (bool?)node.Properties["loop"] ?? false
                     });
@@ -251,12 +304,17 @@ namespace QFoldIT.Toolbelt.Editor.Tools
                     break;
 
                 case "ui_panel":
-                    // UI is Unity's 2D screen-space Widget/Canvas system — the UAG
-                    // node's world x/y are reused as anchored screen pixels, which
-                    // is a reasonable default but not a true 3D placement; a UAG
-                    // producer targeting in-world UI should say so via properties
-                    // and a future revision can branch on that.
-                    UITools.CreatePanel(new UITools.CreatePanelParams { Name = node.Id, X = x, Y = y });
+                    bool worldSpace = (bool?)node.Properties["world_space"] ?? false;
+                    if (worldSpace)
+                    {
+                        var canvasName = $"{node.Id}_Canvas";
+                        UITools.CreateCanvas(new UITools.CreateCanvasParams { Name = canvasName, RenderMode = "WorldSpace", X = x, Y = y, Z = z });
+                        UITools.CreatePanel(new UITools.CreatePanelParams { Name = node.Id, Canvas = canvasName, X = 0, Y = 0 });
+                    }
+                    else
+                    {
+                        UITools.CreatePanel(new UITools.CreatePanelParams { Name = node.Id, X = x, Y = y });
+                    }
                     break;
 
                 case "trigger_volume":
@@ -275,20 +333,40 @@ namespace QFoldIT.Toolbelt.Editor.Tools
 
         private static void ApplyTransform(UagNode node)
         {
-            var rot = node.Transform?.RotationEulerDeg ?? new float[] { 0, 0, 0 };
-            var scl = node.Transform?.Scale ?? new float[] { 1, 1, 1 };
+            var rot = node.RotationEulerDeg;
+            var scl = node.Scale;
             SceneTools.TransformObject(new SceneTools.TransformObjectParams
             {
                 Name = node.Id,
-                RotX = rot.Length > 0 ? rot[0] : 0, RotY = rot.Length > 1 ? rot[1] : 0, RotZ = rot.Length > 2 ? rot[2] : 0,
-                Scale = scl.Length > 0 ? scl[0] : 1f // uniform-scale tools only; non-uniform UAG scale is approximated by its X component
+                RotX = rot[0], RotY = rot[1], RotZ = rot[2],
+                ScaleX = scl[0], ScaleY = scl[1], ScaleZ = scl[2]
             });
         }
 
-        private static string CreateEmptyAnchor(string name, float x, float y, float z)
+        private static object Provenance(UagGraph graph) => new
         {
-            SceneTools.SpawnGroupNode(new SceneTools.SpawnGroupNodeParams { Name = name, X = x, Y = y, Z = z });
-            return name;
-        }
+            schema = graph.Schema,
+            scene_id = graph.Scene?.Id,
+            compiler = graph.Metadata != null && graph.Metadata["compiler"] != null ? (string)graph.Metadata["compiler"] : null
+        };
+
+        private static object Report(string status,
+            IEnumerable<string> created = null, IEnumerable<string> updated = null, IEnumerable<string> skipped = null,
+            IEnumerable<object> gaps = null, IEnumerable<object> warnings = null, IEnumerable<object> errors = null,
+            object provenance = null) => new
+        {
+            success = status != "failed",
+            status,
+            engine = EngineId,
+            adapter = AdapterId,
+            adapter_version = AdapterVersion,
+            created = created ?? System.Array.Empty<string>(),
+            updated = updated ?? System.Array.Empty<string>(),
+            skipped = skipped ?? System.Array.Empty<string>(),
+            gaps = gaps ?? System.Array.Empty<object>(),
+            warnings = warnings ?? System.Array.Empty<object>(),
+            errors = errors ?? System.Array.Empty<object>(),
+            provenance
+        };
     }
 }

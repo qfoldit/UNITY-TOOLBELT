@@ -124,6 +124,21 @@
       ]
     },
     {
+      "id": "interaction_tools",
+      "name": "Interaction Tools",
+      "version": "0.2.0",
+      "author": "qFoldIT",
+      "type": "core",
+      "description": "Real interaction realization: attaches a working, pre-compiled QFoldITInteractable component (click-wired UnityEvent) for any of the 10 gameplay mechanics or legacy triggers.",
+      "category": "Interaction",
+      "file": "Editor/Tools/InteractionTools.cs",
+      "tool_count": 2,
+      "tools": [
+        "interaction_create",
+        "interaction_fire"
+      ]
+    },
+    {
       "id": "lighting_tools",
       "name": "Lighting Tools",
       "version": "0.2.0",
@@ -329,6 +344,21 @@
         "scene_list_objects",
         "spawn_group_node",
         "scene_find_by_name"
+      ]
+    },
+    {
+      "id": "scientific_visualization_tools",
+      "name": "Scientific Visualization Tools",
+      "version": "0.2.0",
+      "author": "qFoldIT",
+      "type": "core",
+      "description": "Real scientific-state visualization: mechanic-differentiated visible anchors with optional world-space labels, plus QFoldITScientificBinding components for live scientific-state URIs.",
+      "category": "ScientificVisualization",
+      "file": "Editor/Tools/ScientificVisualizationTools.cs",
+      "tool_count": 2,
+      "tools": [
+        "scientific_visualization_create",
+        "scientific_binding_create"
       ]
     },
     {

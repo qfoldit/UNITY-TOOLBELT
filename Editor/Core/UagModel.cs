@@ -1,15 +1,34 @@
 // qFoldIT Toolbelt for Unity — UagModel.cs
-// Data model for qFoldIT's Universal Assembly Graph (UAG) v0.1.
-// Field names and shape are copied 1:1 from the canonical schema at
-// qfoldit/UEFN-TOOLBELT: .claude/skills/game-designer/references/uag_schema.md
-// so a UAG document produced by game-designer (or by hand) deserializes
-// here without any translation layer of its own.
 //
-// Deliberately NOT using Unity's JsonUtility: UAG's "properties" field is a
-// free-form object whose shape depends on node type, and JsonUtility can't
-// deserialize into Dictionary<string,object> / arbitrary nested objects.
-// Newtonsoft.Json (com.unity.nuget.newtonsoft-json) handles this cleanly
-// via JObject/JToken.
+// Data model for qFoldIT's Universal Assembly Graph, conforming to the
+// FORMAL, normative schema shipped in qfoldit-engine-adapter-spec-v0.1
+// (schemas/uag.schema.json) — supersedes the informal markdown-derived
+// model this file was originally built against in Phase 1. Key
+// differences from that earlier shape, carried over here deliberately:
+//
+//   - Top-level "schema" (const "qfoldit.uag/0.1"), not "uag_version".
+//   - A required "scene" object ({id, name?, metadata?}), not absent.
+//   - "nodes[].parent" (a single string/null), not "parent_id".
+//   - No "connections[]" array at all — hierarchy is expressed purely via
+//     node.parent. The formal schema leaves constraints/interactions/
+//     bindings as open {"type": "object"} arrays — it does not mandate
+//     their internal fields, only that they exist as arrays of objects.
+//   - A new "bindings[]" array: {id, source, target}, binding a node to a
+//     live scientific-state URI (e.g. "scientific-state://protein_design_mcp/x").
+//
+// interactions[]/constraints[]/bindings[] internal shape is NOT mandated
+// by schemas/uag.schema.json. This file documents and implements a
+// specific interpretation, informed by the one concrete producer that
+// exists today — reference/compiler.py in
+// qfoldit-scientific-gameplay-framework-v0.1 — which emits:
+//   interactions: [{id, type, target}]      (single "target")
+//   bindings:     [{id, source, target}]
+//   constraints:  [] in every current example, but this adapter still
+//                 supports {id, type, target_nodes[], properties} for
+//                 physics-flavoured constraints (physics_collision,
+//                 joints), since CANONICAL_ACTIONS.md lists
+//                 physics.body.create / physics.joint.create as
+//                 canonical actions that need *some* UAG representation.
 
 using System.Collections.Generic;
 using Newtonsoft.Json;
@@ -17,35 +36,45 @@ using Newtonsoft.Json.Linq;
 
 namespace QFoldIT.Toolbelt.Editor.Uag
 {
-    public class UagTransform
+    public class UagScene
     {
-        [JsonProperty("position")] public float[] Position { get; set; } = { 0, 0, 0 };
-        [JsonProperty("rotation_euler_deg")] public float[] RotationEulerDeg { get; set; } = { 0, 0, 0 };
-        [JsonProperty("scale")] public float[] Scale { get; set; } = { 1, 1, 1 };
+        [JsonProperty("id")] public string Id { get; set; }
+        [JsonProperty("name")] public string Name { get; set; }
+        [JsonProperty("metadata")] public JObject Metadata { get; set; } = new JObject();
     }
 
     public class UagNode
     {
         [JsonProperty("id")] public string Id { get; set; }
-        [JsonProperty("type")] public string Type { get; set; } // mesh|light|camera|trigger_volume|ui_panel|particle_emitter|audio_source|group|custom
-        [JsonProperty("transform")] public UagTransform Transform { get; set; } = new UagTransform();
+        [JsonProperty("type")] public string Type { get; set; }
+        [JsonProperty("parent")] public string Parent { get; set; }
+        [JsonProperty("transform")] public JObject Transform { get; set; } = new JObject();
         [JsonProperty("properties")] public JObject Properties { get; set; } = new JObject();
-        [JsonProperty("parent_id")] public string ParentId { get; set; }
-    }
+        [JsonProperty("metadata")] public JObject Metadata { get; set; } = new JObject();
 
-    public class UagConnection
-    {
-        [JsonProperty("id")] public string Id { get; set; }
-        [JsonProperty("type")] public string Type { get; set; } // parent_child|joint_fixed|joint_hinge|joint_slider|data_link
-        [JsonProperty("from_node")] public string FromNode { get; set; }
-        [JsonProperty("to_node")] public string ToNode { get; set; }
-        [JsonProperty("properties")] public JObject Properties { get; set; } = new JObject();
+        // Convenience accessors over the loosely-typed "transform" object
+        // (the formal schema only requires it to be an object — no fixed
+        // sub-shape — but every known producer, including compiler.py's
+        // UAG output and this adapter's own tests, uses these three keys).
+        public float[] Position => ReadFloatArray("position", new float[] { 0, 0, 0 });
+        public float[] RotationEulerDeg => ReadFloatArray("rotation_euler_deg", new float[] { 0, 0, 0 });
+        public float[] Scale => ReadFloatArray("scale", new float[] { 1, 1, 1 });
+
+        private float[] ReadFloatArray(string key, float[] fallback)
+        {
+            if (Transform == null || !Transform.TryGetValue(key, out var token) || token.Type != JTokenType.Array)
+                return fallback;
+            var arr = (JArray)token;
+            var result = new float[arr.Count];
+            for (int i = 0; i < arr.Count; i++) result[i] = (float)arr[i];
+            return result;
+        }
     }
 
     public class UagConstraint
     {
         [JsonProperty("id")] public string Id { get; set; }
-        [JsonProperty("type")] public string Type { get; set; } // physics_collision|interaction_grabbable|animation_trigger|logic_rule
+        [JsonProperty("type")] public string Type { get; set; }
         [JsonProperty("target_nodes")] public List<string> TargetNodes { get; set; } = new List<string>();
         [JsonProperty("properties")] public JObject Properties { get; set; } = new JObject();
     }
@@ -53,26 +82,30 @@ namespace QFoldIT.Toolbelt.Editor.Uag
     public class UagInteraction
     {
         [JsonProperty("id")] public string Id { get; set; }
-        [JsonProperty("trigger")] public string Trigger { get; set; } // on_grab|on_proximity|on_gaze|on_click|on_timer
-        [JsonProperty("target_node")] public string TargetNode { get; set; }
-        [JsonProperty("action")] public string Action { get; set; } // engine-agnostic free text
+        [JsonProperty("type")] public string Type { get; set; }
+        [JsonProperty("target")] public string Target { get; set; }
+        [JsonProperty("properties")] public JObject Properties { get; set; } = new JObject();
     }
 
-    public class UagMetadata
+    public class UagBinding
     {
-        [JsonProperty("name")] public string Name { get; set; }
-        [JsonProperty("description")] public string Description { get; set; }
-        [JsonProperty("source_context")] public string SourceContext { get; set; }
+        [JsonProperty("id")] public string Id { get; set; }
+        [JsonProperty("source")] public string Source { get; set; }
+        [JsonProperty("target")] public string Target { get; set; }
+        [JsonProperty("properties")] public JObject Properties { get; set; } = new JObject();
     }
 
     public class UagGraph
     {
-        [JsonProperty("uag_version")] public string UagVersion { get; set; }
-        [JsonProperty("metadata")] public UagMetadata Metadata { get; set; } = new UagMetadata();
+        [JsonProperty("schema")] public string Schema { get; set; }
+        [JsonProperty("scene")] public UagScene Scene { get; set; } = new UagScene();
         [JsonProperty("nodes")] public List<UagNode> Nodes { get; set; } = new List<UagNode>();
-        [JsonProperty("connections")] public List<UagConnection> Connections { get; set; } = new List<UagConnection>();
         [JsonProperty("constraints")] public List<UagConstraint> Constraints { get; set; } = new List<UagConstraint>();
         [JsonProperty("interactions")] public List<UagInteraction> Interactions { get; set; } = new List<UagInteraction>();
+        [JsonProperty("bindings")] public List<UagBinding> Bindings { get; set; } = new List<UagBinding>();
+        [JsonProperty("metadata")] public JObject Metadata { get; set; } = new JObject();
+
+        public const string SupportedSchema = "qfoldit.uag/0.1";
 
         public static UagGraph Parse(string json) =>
             JsonConvert.DeserializeObject<UagGraph>(json) ?? new UagGraph();

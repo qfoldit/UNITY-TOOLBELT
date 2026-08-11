@@ -69,11 +69,16 @@ namespace QFoldIT.Toolbelt.Editor.Tools
             public float? RotY { get; set; }
             public float? RotZ { get; set; }
 
-            [McpDescription("Uniform scale override")]
+            [McpDescription("Uniform scale override; ignored per-axis if ScaleX/ScaleY/ScaleZ are given instead")]
             public float? Scale { get; set; }
+
+            [McpDescription("Independent per-axis scale; each omitted axis keeps its current value (unlike Scale, which sets all three)")]
+            public float? ScaleX { get; set; }
+            public float? ScaleY { get; set; }
+            public float? ScaleZ { get; set; }
         }
 
-        [McpTool("transform_object", "Sets position/rotation/scale on an existing GameObject found by name.")]
+        [McpTool("transform_object", "Sets position/rotation/scale on an existing GameObject found by name. Unspecified position/rotation/per-axis-scale fields are preserved. Scale accepts a uniform value or independent ScaleX/ScaleY/ScaleZ.")]
         public static object TransformObject(TransformObjectParams p)
         {
             var go = GameObject.Find(p.Name);
@@ -94,8 +99,16 @@ namespace QFoldIT.Toolbelt.Editor.Tools
             go.transform.eulerAngles = rot;
 
             if (p.Scale.HasValue) go.transform.localScale = Vector3.one * p.Scale.Value;
+            if (p.ScaleX.HasValue || p.ScaleY.HasValue || p.ScaleZ.HasValue)
+            {
+                var scl = go.transform.localScale;
+                if (p.ScaleX.HasValue) scl.x = p.ScaleX.Value;
+                if (p.ScaleY.HasValue) scl.y = p.ScaleY.Value;
+                if (p.ScaleZ.HasValue) scl.z = p.ScaleZ.Value;
+                go.transform.localScale = scl;
+            }
 
-            return new { success = true, name = go.name, position = new[] { go.transform.position.x, go.transform.position.y, go.transform.position.z } };
+            return new { success = true, name = go.name, position = new[] { go.transform.position.x, go.transform.position.y, go.transform.position.z }, scale = new[] { go.transform.localScale.x, go.transform.localScale.y, go.transform.localScale.z } };
         }
 
         // ── clone_object ────────────────────────────────────────────────

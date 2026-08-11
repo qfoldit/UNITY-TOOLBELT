@@ -1,6 +1,6 @@
 # Tool Reference — qFoldIT Toolbelt for Unity
 
-Auto-summarized from `registry.json` (2026-08-03). 105 tools across 26 categories.
+Auto-summarized from `registry.json` (2026-08-03). 109 tools across 28 categories.
 
 ## Animation — Animation Tools
 
@@ -77,6 +77,15 @@ Source: `Editor/Tools/ConsoleBuildTools.cs`
 - `console_execute_menu_item`
 - `build_player`
 - `console_get_log`
+
+## Interaction — Interaction Tools
+
+Real interaction realization: attaches a working, pre-compiled QFoldITInteractable component (click-wired UnityEvent) for any of the 10 gameplay mechanics or legacy triggers.
+
+Source: `Editor/Tools/InteractionTools.cs`
+
+- `interaction_create`
+- `interaction_fire`
 
 ## Lighting — Lighting Tools
 
@@ -213,6 +222,15 @@ Source: `Editor/Tools/SceneTools.cs`
 - `scene_list_objects`
 - `spawn_group_node`
 - `scene_find_by_name`
+
+## ScientificVisualization — Scientific Visualization Tools
+
+Real scientific-state visualization: mechanic-differentiated visible anchors with optional world-space labels, plus QFoldITScientificBinding components for live scientific-state URIs.
+
+Source: `Editor/Tools/ScientificVisualizationTools.cs`
+
+- `scientific_visualization_create`
+- `scientific_binding_create`
 
 ## Stamps — Stamp Tools
 
