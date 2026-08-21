@@ -2,8 +2,8 @@
   "spec": "qfoldit.engine-adapter/0.1",
   "platform": { "contract_family": "qfoldit.platform/1.0" },
   "engine": { "id": "unity", "name": "Unity", "version": "2023.1+" },
-  "adapter": { "id": "qfoldit-unity-toolbelt", "version": "0.2.0" },
-  "contracts": { "uag": "qfoldit.uag/0.1" },
+  "adapter": { "id": "qfoldit-unity-toolbelt", "version": "0.3.0" },
+  "contracts": { "uag": "qfoldit.uag/0.1", "scientific_environment": "qfoldit.scientific-environment/1.0" },
   "capabilities": [
     { "id": "scene.graph", "level": "native", "status": "supported" },
     { "id": "scene.snapshot", "level": "adapter", "status": "supported" },
@@ -21,7 +21,15 @@
     { "id": "interaction", "level": "adapter", "status": "supported" },
     { "id": "uag.validate", "level": "adapter", "status": "supported" },
     { "id": "uag.apply", "level": "adapter", "status": "supported" },
-    { "id": "scientific.visualization", "level": "adapter", "status": "supported" }
+    { "id": "scientific.visualization", "level": "adapter", "status": "supported" },
+    { "id": "scientific.environment.particles", "level": "adapter", "status": "partial" },
+    { "id": "scientific.environment.fluids", "level": "adapter", "status": "partial" },
+    { "id": "scientific.environment.volumetrics", "level": "adapter", "status": "partial" },
+    { "id": "scientific.environment.fields", "level": "adapter", "status": "partial" },
+    { "id": "scientific.environment.materials", "level": "adapter", "status": "partial" },
+    { "id": "experience.build_mode", "level": "adapter", "status": "supported" },
+    { "id": "experience.racing_mode", "level": "adapter", "status": "supported" },
+    { "id": "quantum.opportunity_scheduling", "level": "platform", "status": "supported" }
   ],
   "actions": [
     { "canonical": "scene.snapshot", "support": "adapter", "tools": ["world_state_export"] },
@@ -31,8 +39,10 @@
     { "canonical": "interaction.create", "support": "adapter", "tools": ["interaction_create", "interaction_fire"] },
     { "canonical": "scientific.visualization.create", "support": "adapter", "tools": ["scientific_visualization_create"] },
     { "canonical": "scientific.state.bind", "support": "adapter", "tools": ["scientific_binding_create"] },
+    { "canonical": "experience.build_mode.create", "support": "adapter", "tools": ["procedural_place"] },
+    { "canonical": "experience.racing_mode.create", "support": "adapter", "tools": ["arena_generate"] },
     { "canonical": "experience.validate", "support": "adapter", "tools": ["uag_validate"] },
     { "canonical": "experience.apply", "support": "adapter", "tools": ["uag_apply"] }
   ],
-  "notes": "Unity is a runtime adapter. Scientific state visualization and interaction infrastructure do not constitute scientific authority; authoritative scientific evaluation remains in CAMEO and scientific validator services."
+  "notes": "Unity is a runtime adapter. Scientific environment visualization is contract-aligned; partial environment capabilities require scene-level implementation and runtime validation before being treated as fully production-ready."
 }
